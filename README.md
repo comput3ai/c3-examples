@@ -4,6 +4,15 @@ This repository contains example scripts and tools to help you quickly get start
 
 ## 📂 Available Examples
 
+### 🤖 [c3-prompt-script](./c3-prompt-script)
+A Python script for sending multiple prompts to large language models running on Comput3's infrastructure and saving the responses. Perfect for batch processing text generation tasks.
+
+**Key Features:**
+- Processes multiple prompts from a text file
+- Supports various Comput3 language models (default: llama3:70b)
+- Saves model responses as individual text files
+- Simple command-line interface for ease of use
+
 ### 🖼️ [c3-visionmodel-script](./c3-visionmodel-script)
 A Python script for analyzing images using the Llama 3.2 Vision model on Comput3's GPU infrastructure. Simply provide an image, and the script will generate a detailed analysis of its contents.
 
@@ -36,4 +45,4 @@ All examples require a Comput3 API key. You can obtain your key by:
 
 ## 📚 Documentation
 
-For more detailed information about Comput3's services and API, visit  https://www.comput3.ai 
+For more detailed information about Comput3's services and API, visit  https://www.comput3.ai
