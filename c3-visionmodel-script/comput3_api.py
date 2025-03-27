@@ -52,6 +52,7 @@ class Comput3API:
         except Exception as e:
             logger.error(f"❌ Error getting workloads: {str(e)}")
             return []
+        
     def get_fast_instance(self) -> Optional[Dict[str, Any]]:
         """Get a running fast instance if available along with its index in the workload list"""
         workloads = self.get_running_workloads()

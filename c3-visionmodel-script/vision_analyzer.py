@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class VisionAnalyzer:
     """Class for analyzing images using vision models on Comput3"""
     
-    def __init__(self, node_index: str, api_key: str):
+    def __init__(self, node_index: int, api_key: str):
         """Initialize with node index and API key"""
         self.node_index = node_index
         self.api_key = api_key

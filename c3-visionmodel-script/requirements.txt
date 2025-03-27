@@ -1,0 +1,7 @@
+# Core libraries
+requests>=2.28.0
+python-dotenv>=0.20.0
+
+# Optional but recommended for development
+pillow>=9.0.0  # For advanced image handling
+tqdm>=4.64.0   # For progress bars
