@@ -13,7 +13,6 @@ Generate talking head avatars using ComfyUI through the Comput3 platform. This t
 1. Clone this repository:
    ```bash
    git clone https://github.com/comput3ai/c3-examples/c3-comfyUI-script.git
-   cd comput3-avatar-generator
    ```
 
 2. Install dependencies:
