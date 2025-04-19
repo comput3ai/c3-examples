@@ -19,7 +19,7 @@ class Program
         });
         var logger = loggerFactory.CreateLogger<Program>();
 
-        var promptFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Input", "Prompts.txt"); ;
+        var promptFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Input", "Prompts.txt");
         var model = "llama3:70b";
         var outputDir = "Output";
 
