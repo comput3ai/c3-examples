@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VisionModel": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
