@@ -1,7 +1,8 @@
 {
   "profiles": {
     "VisionModel": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-i \"Input/c3CodeLama.png\""
     },
     "Container (Dockerfile)": {
       "commandName": "Docker"

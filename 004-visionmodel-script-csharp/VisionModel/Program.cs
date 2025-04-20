@@ -1,12 +1,36 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 
 class Program
 {
-    static async Task Main(string[] args)
+    static async Task<int> Main(string[] args)
     {
-        Console.WriteLine("Script starting...");
+        Console.WriteLine("Application starting...");
 
+        // Setup command line arguments
+        var rootCommand = new RootCommand("C# application to analyze images using Llama 3.2 Vision model on Comput3's GPU infrastructure.");
+        var imageOption = new Option<string>(
+            aliases: new[] { "--image-path", "-i" },
+            description: "Path to the image file to analyze"
+        )
+        {
+            IsRequired = true,
+
+        };
+        rootCommand.AddOption(imageOption);
+
+        rootCommand.SetHandler(async (string imagePath) =>
+        {
+            await RunAnalyzer(imagePath);
+        }, imageOption);
+
+        return await rootCommand.InvokeAsync(args);
+    }
+
+    static async Task RunAnalyzer(string imagePath)
+    {
         // Setup logging
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -20,7 +44,13 @@ class Program
         });
         var logger = loggerFactory.CreateLogger<Program>();
 
-        var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "Input", "c3CodeLama.png");
+        // Load configuration from appsettings.json
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        var apiKey = configuration["C3ApiKey"];
 
         if (string.IsNullOrEmpty(imagePath))
         {
@@ -34,10 +64,9 @@ class Program
             Environment.Exit(1);
         }
 
-        var apiKey = "your_c3_api_key_here";
         if (string.IsNullOrEmpty(apiKey))
         {
-            logger.LogError("❌ C3_API_KEY not found in environment variables.");
+            logger.LogError("❌ C3ApiKey not found in appsettings.json.");
             Environment.Exit(1);
         }
 
@@ -58,6 +87,10 @@ class Program
 
         // Initialize the vision analyzer
         var analyzer = new VisionAnalyzer(nodeIndex, apiKey, loggerFactory.CreateLogger<VisionAnalyzer>());
+
+        // Ensure output directory exists
+        var outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Analyze the image
         logger.LogInformation($"🖼️ Analyzing image: {imagePath}");
