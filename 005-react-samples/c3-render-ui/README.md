@@ -101,3 +101,29 @@ This creates a production-ready build in the `build` folder.
 - TailwindCSS is used for styling
 - Axios is used for API requests
 - API keys are stored in localStorage for persistence
+
+## CORS Configuration
+
+To avoid CORS issues during development, the application uses a proxy configuration in `package.json`:
+
+```json
+{
+  "proxy": "https://render.comput3.ai"
+}
+```
+
+This proxy setting automatically forwards API requests from the development server to the specified API endpoint, bypassing CORS restrictions. In development mode, the API service uses relative URLs to leverage this proxy.
+
+### Important Notes:
+
+1. The proxy only works in development mode (`npm start`)
+2. For production builds, you must ensure proper CORS headers are set on your API server
+3. If you change the proxy URL, you need to restart the development server
+
+### Alternative CORS Solutions:
+
+If the proxy doesn't work for your setup, consider:
+
+1. Using a CORS browser extension (for testing only)
+2. Setting up a dedicated proxy server
+3. Configuring proper CORS headers on your API server (recommended for production)

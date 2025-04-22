@@ -8,6 +8,9 @@ import SelectField from './ui/SelectField';
 // Enable debug mode from environment variables
 const DEBUG_MODE = process.env.REACT_APP_DEBUG === 'true';
 
+// Determine if we're using a proxy (development mode)
+const isUsingProxy = process.env.NODE_ENV === 'development';
+
 const ApiTester: React.FC = () => {
   const [endpoint, setEndpoint] = useState<string>('/status');
   const [method, setMethod] = useState<string>('GET');
@@ -17,7 +20,8 @@ const ApiTester: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [requestId, setRequestId] = useState<string>('');
 
-  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+  // When using proxy in development, use relative URLs
+  const apiBaseUrl = isUsingProxy ? '' : (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000');
   const apiKey = localStorage.getItem('c3_render_api_key') || '';
 
   const methodOptions = [

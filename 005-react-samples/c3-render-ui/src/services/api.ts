@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-// API base URL - for development, use localhost
-// In production, this would be the actual API endpoint
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://render.comput3.ai';
+// Determine if we're using a proxy (development mode)
+const isUsingProxy = process.env.NODE_ENV === 'development';
+
+// API base URL - for development with proxy, use relative URLs
+// In production, use the absolute URL from environment variable
+const API_BASE_URL = isUsingProxy ? '' : (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000');
 
 // Get API key from environment variable or local storage
 const getApiKey = (): string => {
