@@ -11,15 +11,10 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
           <Link to="/" className="text-xl font-bold text-indigo-600">
-            C3 Render UI
+            Comput3 Render UI
           </Link>
           <nav className="flex items-center">
             <ul className="flex space-x-6 mr-4">
-              <li>
-                <Link to="/" className="text-gray-600 hover:text-indigo-600">
-                  Services
-                </Link>
-              </li>
               <li>
                 <Link to="/api-tester" className="text-gray-600 hover:text-indigo-600 flex items-center">
                   <BeakerIcon className="w-4 h-4 mr-1" />
