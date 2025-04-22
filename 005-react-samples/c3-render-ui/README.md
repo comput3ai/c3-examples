@@ -1,46 +1,103 @@
-# Getting Started with Create React App
+# C3 Render UI
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern React web application for interacting with the C3 Render API.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Select from multiple rendering services (CSM, Whisper, Portrait, Image Analysis)
+- Submit jobs to the C3 Render API
+- Track job status and view results
+- API Key management through the UI
+- Built-in API testing tool
 
-### `npm start`
+## Setup
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Prerequisites
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js 16+ and npm
+- Access to a C3 Render API endpoint (local or remote)
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone the repository
+2. Install dependencies:
 
-### `npm run build`
+```bash
+cd c3-render-ui
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Set up environment variables:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+# Copy example environment file
+cp .env.example .env.local
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Edit .env.local to set your API endpoint
+# Optionally set your API key for development
+```
 
-### `npm run eject`
+4. Start the development server:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+npm start
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Environment Variables
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+The application uses the following environment variables:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `REACT_APP_API_BASE_URL` | Base URL of the C3 Render API | `http://localhost:5000` |
+| `REACT_APP_API_KEY` | Optional API key for development | - |
+| `REACT_APP_POLL_INTERVAL` | Interval (ms) for polling job status | `5000` |
+| `REACT_APP_DEBUG` | Enable debug logging | `false` |
 
-## Learn More
+### Environment Files
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `.env.development` - Used during development
+- `.env.production` - Used for production builds
+- `.env.local` - Override for local development (not committed to git)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## API Key Management
+
+There are two ways to set an API key:
+
+1. **Development**: Set `REACT_APP_API_KEY` in your `.env.local` file
+2. **Production/UI**: Use the API Key Settings dialog in the UI
+
+The API key is stored in browser localStorage and included in all API requests.
+
+## Available Services
+
+- **CSM (Text-to-Speech)**: Generate speech from text
+- **Whisper (Speech-to-Text)**: Transcribe audio to text
+- **Portrait**: Generate talking portrait videos
+- **Analyze**: Analyze images with vision models
+
+## Using the API Tester
+
+The API Tester tool allows you to:
+
+1. Select an API endpoint
+2. Choose the HTTP method
+3. Provide a request body (for POST requests)
+4. Send requests and view responses
+
+This is useful for debugging API issues and testing your API key.
+
+## Building for Production
+
+```bash
+npm run build
+```
+
+This creates a production-ready build in the `build` folder.
+
+## Development Notes
+
+- The application uses React Router for navigation
+- TailwindCSS is used for styling
+- Axios is used for API requests
+- API keys are stored in localStorage for persistence

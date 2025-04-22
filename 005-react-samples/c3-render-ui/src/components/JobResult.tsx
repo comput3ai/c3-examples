@@ -91,6 +91,9 @@ const VideoPlayer: React.FC<{ url: string }> = ({ url }) => {
   );
 };
 
+// Get polling interval from environment variables or use default (5000ms)
+const POLL_INTERVAL = parseInt(process.env.REACT_APP_POLL_INTERVAL || '5000', 10);
+
 const JobResult: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getJob, updateJob } = useJobContext();
@@ -138,7 +141,7 @@ const JobResult: React.FC = () => {
     
     // Set up polling for non-completed jobs
     if (job && (job.status === 'queued' || job.status === 'running')) {
-      const interval = setInterval(checkStatus, 5000);
+      const interval = setInterval(checkStatus, POLL_INTERVAL);
       return () => clearInterval(interval);
     }
   }, [id, job?.status]);

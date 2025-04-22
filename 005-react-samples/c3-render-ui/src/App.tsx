@@ -6,6 +6,7 @@ import WhisperForm from './components/WhisperForm';
 import PortraitForm from './components/PortraitForm';
 import AnalyzeForm from './components/AnalyzeForm';
 import JobResult from './components/JobResult';
+import ApiTester from './components/ApiTester';
 import Header from './components/Header';
 import JobProvider from './context/JobContext';
 
@@ -23,6 +24,7 @@ function App() {
               <Route path="/portrait" element={<PortraitForm />} />
               <Route path="/analyze" element={<AnalyzeForm />} />
               <Route path="/result/:id" element={<JobResult />} />
+              <Route path="/api-tester" element={<ApiTester />} />
             </Routes>
           </div>
         </div>

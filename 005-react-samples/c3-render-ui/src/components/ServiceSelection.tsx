@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SpeakerWaveIcon, MicrophoneIcon, VideoCameraIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import ApiKeyWarning from './ApiKeyWarning';
+import ApiKeySettings from './ApiKeySettings';
 
 interface ServiceCardProps {
   title: string;
@@ -27,6 +29,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ title, description, icon, to 
 };
 
 const ServiceSelection: React.FC = () => {
+  const [showSettings, setShowSettings] = useState(false);
+  
   const services = [
     {
       id: 'csm',
@@ -60,6 +64,8 @@ const ServiceSelection: React.FC = () => {
 
   return (
     <div>
+      <ApiKeyWarning onSetupClick={() => setShowSettings(true)} />
+      
       <h1 className="text-3xl font-bold text-gray-800 mb-2">C3 Render Services</h1>
       <p className="text-gray-600 mb-8">Select a service to get started with your AI rendering task.</p>
       
@@ -74,6 +80,22 @@ const ServiceSelection: React.FC = () => {
           />
         ))}
       </div>
+      
+      {showSettings && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="w-full max-w-md mx-auto">
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettings(false)} 
+                className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+              <ApiKeySettings onClose={() => setShowSettings(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

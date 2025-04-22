@@ -2,20 +2,53 @@ import axios from 'axios';
 
 // API base URL - for development, use localhost
 // In production, this would be the actual API endpoint
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://render.comput3.ai';
 
-// Add your API key for production environments
-const API_KEY = '';
+// Get API key from environment variable or local storage
+const getApiKey = (): string => {
+  // First try to get from environment variable (for development)
+  const envApiKey = process.env.REACT_APP_API_KEY;
+  if (envApiKey) return envApiKey;
+  
+  // Then try to get from local storage (for production)
+  const storageApiKey = localStorage.getItem('c3_render_api_key');
+  return storageApiKey || '';
+};
+
+// Function to set API key
+export const setApiKey = (apiKey: string): void => {
+  localStorage.setItem('c3_render_api_key', apiKey);
+  // Update the Authorization header in the Axios instance
+  updateAuthHeader(apiKey);
+};
+
+// Function to clear API key
+export const clearApiKey = (): void => {
+  localStorage.removeItem('c3_render_api_key');
+  // Remove the Authorization header from the Axios instance
+  apiClient.defaults.headers.common['X-C3-RENDER-KEY'] = undefined;
+  apiClient.defaults.headers.common['Authorization'] = undefined;
+};
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    // Only add API key in production
-    ...(API_KEY ? { 'X-C3-RENDER-KEY': API_KEY } : {})
   },
 });
+
+// Function to update Authorization header
+const updateAuthHeader = (apiKey: string): void => {
+  if (apiKey) {
+    apiClient.defaults.headers.common['X-C3-RENDER-KEY'] = apiKey;
+    // Also set Bearer token format as an alternative
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
+  }
+};
+
+// Initialize auth header with API key (if available)
+updateAuthHeader(getApiKey());
 
 // Type definitions for API requests and responses
 export interface CSMRequest {
