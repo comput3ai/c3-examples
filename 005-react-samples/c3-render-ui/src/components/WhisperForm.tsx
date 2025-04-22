@@ -60,8 +60,8 @@ const WhisperForm: React.FC = () => {
   
   // Sample audio URLs for testing
   const sampleUrls = [
-    { label: 'TED Talk (English)', url: 'https://download.ted.com/talks/KateDarling_2018S-950k.mp4' },
-    { label: 'NASA Briefing', url: 'https://www.nasa.gov/wp-content/uploads/2023/04/sls_engine_test_for_artemis_ii_mission.mp3' },
+    { label: 'TED Talk 1 (English)', url: 'https://download.ted.com/talks/KateDarling_2018S-950k.mp4' },
+    { label: 'Female Voice Sample', url: 'https://comput3.ai/media/female.mp3' },
   ];
 
   const setSampleUrl = (url: string) => {
