@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircleIcon, XCircleIcon, ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, ClockIcon, ArrowPathIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
 import Button from './ui/Button';
 import api from '../services/api';
 import { useJobContext } from '../context/JobContext';
@@ -68,13 +68,29 @@ const AudioPlayer: React.FC<{ url: string }> = ({ url }) => {
 };
 
 // Text result display for text-based jobs (Whisper, Analyze)
-const TextResult: React.FC<{ text: string }> = ({ text }) => {
+const TextResult: React.FC<{ text: string; jobType: 'whisper' | 'analyze' }> = ({ text, jobType }) => {
   return (
     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-      <h3 className="text-lg font-medium text-gray-800 mb-3">Result</h3>
-      <div className="p-3 bg-white border border-gray-200 rounded-md whitespace-pre-wrap">
+      <h3 className="text-lg font-medium text-gray-800 mb-3">
+        {jobType === 'whisper' ? 'Transcription Result' : 'Analysis Result'}
+      </h3>
+      <div className="p-4 bg-white border border-gray-200 rounded-md whitespace-pre-wrap">
         {text}
       </div>
+      
+      {jobType === 'whisper' && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              navigator.clipboard.writeText(text);
+              alert('Transcription copied to clipboard!');
+            }}
+          >
+            Copy Text
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -205,8 +221,8 @@ const JobResult: React.FC = () => {
           )}
           
           {/* For Whisper or Analyze jobs with text result */}
-          {(job.type === 'whisper' || job.type === 'analyze') && job.result.text && (
-            <TextResult text={job.result.text} />
+          {(job.type === 'whisper' || job.type === 'analyze') && job.result?.text && (
+            <TextResult text={job.result.text} jobType={job.type} />
           )}
           
           {/* For Portrait jobs with video result */}
