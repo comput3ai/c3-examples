@@ -295,9 +295,18 @@ class ComfyUIClient {
         return null;
       }
     } catch (error) {
-      //console.log(error);
-      console.log(error.response?.data)
-      console.error(`❌ Error queueing workflow: ${error.message}`);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error(`❌ Server responded with error: ${error.response.status}`);
+        console.error(`Error details: ${JSON.stringify(error.response.data)}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error(`❌ No response received from server: ${error.request}`);
+      } else {
+        // Something happened in setting up the request
+        console.error(`❌ Error setting up request: ${error.message}`);
+      }
       return null;
     }
   }
@@ -305,35 +314,56 @@ class ComfyUIClient {
   /**
    * Get execution history for a prompt
    * @param {string} promptId - Prompt ID
+   * @param {number} retries - Number of retries if history not found
+   * @param {number} retryDelay - Delay between retries in milliseconds
    * @returns {Promise<Object|null>} Execution history or null if not found
    */
-  async getHistory(promptId) {
-    try {
-      const response = await axios.get(
-        `${this.serverUrl}/history`,
-        { headers: this._getHeaders() }
-      );
-      
-      if (response.status === 200) {
-        const history = response.data;
+  async getHistory(promptId, retries = 3, retryDelay = 2000) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        // Use direct history endpoint with promptId like the Python implementation
+        const response = await axios.get(
+          `${this.serverUrl}/history/${promptId}`,
+          { headers: this._getHeaders() }
+        );
         
-        // Find the history item with the matching prompt ID
-        for (const item of Object.values(history)) {
-          if (item.prompt_id === promptId) {
-            return item;
+        if (response.status === 200) {
+          const history = response.data;
+          
+          // Handle both direct and nested response formats
+          if (promptId in history) {
+            return history[promptId];
           }
+          
+          return history;
+        } else {
+          console.error(`❌ Failed to get history: ${response.status} - ${response.data}`);
+          
+          // If not last attempt, wait and retry
+          if (attempt < retries) {
+            console.log(`🔄 Failed to get history, retrying... (${attempt + 1}/${retries})`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            continue;
+          }
+          
+          return null;
+        }
+      } catch (error) {
+        console.error(`❌ Error getting history: ${error.message}`);
+        
+        // If not last attempt, wait and retry
+        if (attempt < retries) {
+          console.log(`🔄 Error getting history, retrying... (${attempt + 1}/${retries})`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue;
         }
         
-        console.warn(`⚠️ No history found for prompt ID: ${promptId}`);
-        return null;
-      } else {
-        console.error(`❌ Failed to get history: ${response.status} - ${response.data}`);
         return null;
       }
-    } catch (error) {
-      console.error(`❌ Error getting history: ${error.message}`);
-      return null;
     }
+    
+    // We should never reach here due to the returns in the loop
+    return null;
   }
   
   /**
@@ -363,6 +393,53 @@ class ComfyUIClient {
         return { completed: true, history, error: errorMessage };
       }
       
+      // Check if there are any outputs, specifically check for VHS_VideoCombine output in node 13
+      if (history.outputs && history.outputs['13']) {
+        const node13Output = history.outputs['13'];
+        const hasNode13Videos = (node13Output.gifs && node13Output.gifs.length > 0) || 
+                              (node13Output.videos && node13Output.videos.length > 0);
+        
+        if (hasNode13Videos) {
+          console.log('✅ Found output videos in node 13');
+          return { completed: true, history, error: null };
+        }
+      }
+      
+      // Check if the workflow is still in queue
+      try {
+        const queueResponse = await axios.get(
+          `${this.serverUrl}/queue`,
+          { headers: this._getHeaders() }
+        );
+        
+        if (queueResponse.status === 200) {
+          const queueData = queueResponse.data;
+          
+          // Check if our prompt is in the queue
+          const runningPrompts = (queueData.queue_running || []).map(item => item.prompt_id);
+          const pendingPrompts = (queueData.queue_pending || []).map(item => item.prompt_id);
+          
+          if (runningPrompts.includes(promptId)) {
+            console.log(`⏳ Workflow is currently running...`);
+            return { completed: false, history, error: null };
+          }
+          
+          if (pendingPrompts.includes(promptId)) {
+            console.log(`⏳ Workflow is pending in queue...`);
+            return { completed: false, history, error: null };
+          }
+          
+          // If we have outputs and we're not in any queue, consider it complete
+          if (history.outputs && Object.keys(history.outputs).length > 0) {
+            console.log('✅ Workflow has outputs and is not in queue, considering complete');
+            return { completed: true, history, error: null };
+          }
+        }
+      } catch (error) {
+        console.warn(`⚠️ Error checking queue status: ${error.message}`);
+        // Continue with other checks even if queue check fails
+      }
+      
       // Execution is still in progress
       const progress = history.status?.processing ? 
         history.status.processing_message || 'Processing...' : 
@@ -387,6 +464,8 @@ class ComfyUIClient {
       
       if (!history) {
         console.error(`❌ No history found for prompt ID: ${promptId}`);
+        console.error(`💡 This may happen if the server hasn't processed the workflow yet or if the workflow was removed from history.`);
+        console.error(`💡 Try increasing the initial wait time or adding retries to the workflow submission.`);
         return null;
       }
       
@@ -401,14 +480,60 @@ class ComfyUIClient {
       for (const nodeId in history.outputs) {
         const nodeOutputs = history.outputs[nodeId];
         
-        for (const output of nodeOutputs) {
-          const { type, filename, subfolder } = output;
-          outputFiles.push({
-            node_id: nodeId,
-            type,
-            filename,
-            subfolder: subfolder || ''
-          });
+        // Check if nodeOutputs is an object with various output types
+        if (nodeOutputs && typeof nodeOutputs === 'object') {
+          // Handle gifs output (often contains videos in ComfyUI)
+          if (nodeOutputs.gifs && Array.isArray(nodeOutputs.gifs)) {
+            for (const output of nodeOutputs.gifs) {
+              outputFiles.push({
+                node_id: nodeId,
+                type: 'video',
+                filename: output.filename || '',
+                subfolder: output.subfolder || ''
+              });
+              console.log(`📹 Found video (from gifs): ${output.filename || 'unnamed'}`);
+            }
+          }
+          
+          // Handle videos output
+          if (nodeOutputs.videos && Array.isArray(nodeOutputs.videos)) {
+            for (const output of nodeOutputs.videos) {
+              outputFiles.push({
+                node_id: nodeId,
+                type: 'video',
+                filename: output.filename || '',
+                subfolder: output.subfolder || ''
+              });
+              console.log(`📹 Found video: ${output.filename || 'unnamed'}`);
+            }
+          }
+          
+          // Handle images output
+          if (nodeOutputs.images && Array.isArray(nodeOutputs.images)) {
+            for (const output of nodeOutputs.images) {
+              outputFiles.push({
+                node_id: nodeId,
+                type: 'image',
+                filename: output.filename || '',
+                subfolder: output.subfolder || ''
+              });
+              console.log(`🖼️ Found image: ${output.filename || 'unnamed'}`);
+            }
+          }
+          
+          // If nodeOutputs is an array itself (direct list of outputs)
+          if (Array.isArray(nodeOutputs)) {
+            for (const output of nodeOutputs) {
+              const type = output.type || 'unknown';
+              outputFiles.push({
+                node_id: nodeId,
+                type: type,
+                filename: output.filename || '',
+                subfolder: output.subfolder || ''
+              });
+              console.log(`📄 Found output (${type}): ${output.filename || 'unnamed'}`);
+            }
+          }
         }
       }
       
@@ -477,9 +602,14 @@ class ComfyUIClient {
     console.log(`⏳ Waiting for workflow completion (max ${timeoutMinutes} minutes)...`);
     
     // Initial wait for workflow to be picked up
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log(`⏱️ Initial wait period (10 seconds)...`);
+    await new Promise(resolve => setTimeout(resolve, 10000));
     
+    let attempt = 1;
     while (Date.now() - startTime < timeoutMs) {
+      const elapsedMinutes = (Date.now() - startTime) / 60000;
+      console.log(`🔄 Check attempt #${attempt} (elapsed: ${elapsedMinutes.toFixed(1)} minutes)`);
+      
       const { completed, history, error } = await this.checkWorkflowStatus(promptId);
       
       if (completed) {
@@ -490,11 +620,15 @@ class ComfyUIClient {
         }
         
         // Successfully completed
+        console.log("✅ Workflow completed successfully!");
         return true;
       }
       
-      // Wait before checking again
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Wait before checking again (30 seconds like Python version)
+      const remainingTime = Math.floor((timeoutMs - (Date.now() - startTime)) / 1000);
+      console.log(`⏳ Still in progress... Checking again in 30s (timeout in ${remainingTime}s)`);
+      await new Promise(resolve => setTimeout(resolve, 30000));
+      attempt++;
     }
     
     console.error(`❌ Workflow timed out after ${timeoutMinutes} minutes`);
