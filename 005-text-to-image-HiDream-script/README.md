@@ -13,7 +13,7 @@ Generate high-quality images from text prompts using ComfyUI through the Comput3
 1. Clone this repository:
    ```bash
    git clone https://github.com/comput3ai/c3-examples.git
-   cd c3-examples/007-text-to-image-script
+   cd c3-examples/005-text-to-image-HiDream-script
    ```
 
 2. Install dependencies:
