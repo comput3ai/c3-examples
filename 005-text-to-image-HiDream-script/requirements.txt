@@ -1,0 +1,16 @@
+# HTTP requests
+requests>=2.28.0
+
+# Environment variables
+python-dotenv>=0.20.0
+
+# Type annotations are standard in Python 3.7+
+# Standard libraries (included by default):
+# - os
+# - json
+# - time
+# - logging
+# - uuid
+# - argparse
+# - sys
+# - random 
