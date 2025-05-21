@@ -21,7 +21,7 @@ Generate high-quality videos from text prompts using ComfyUI through the Comput3
 1. Clone this repository:
    ```bash
    git clone https://github.com/comput3ai/c3-examples.git
-   cd c3-examples/008-text-to-video-script
+   cd c3-examples/006-text-to-video-Wan2.1-Script
    ```
 
 2. Install dependencies:
