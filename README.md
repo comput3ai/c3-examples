@@ -48,6 +48,15 @@ Generate high-quality images from text prompts using ComfyUI through the Comput3
 - Support for both positive and negative prompts
 - Uses ComfyUI workflows on Comput3's media instances
 
+### 🎬 [006-text-to-video-Wan2.1-Script](./006-text-to-video-Wan2.1-Script)
+Generate high-quality videos from text prompts using ComfyUI with the WanVideo model through the Comput3 platform. Transform your text descriptions into dynamic animated videos.
+
+**Key Features:**
+- Creates videos from text descriptions using WanVideo model
+- Customizable video dimensions, frame count, FPS, and sampling steps
+- Real-time progress display with detailed status updates
+- Includes caching capabilities for faster access and recovery
+
 ## 🚀 Getting Started
 
 1. Clone this repository
