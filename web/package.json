@@ -1,0 +1,19 @@
+{
+  "name": "web-examples-from-c3-examples",
+  "version": "1.0.0",
+  "description": "Web examples from c3-examples - Collection of Vite React landing pages showcasing Comput3 capabilities",
+  "scripts": {
+    "dev": "npm run update-index && vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "serve dist -p 4173",
+    "build-all": "npm run build && npm run build-examples",
+    "build-examples": "node scripts/build-all.js",
+    "install-all": "npm install && node scripts/install-all.js",
+    "update-index": "node scripts/update-index.js"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "serve": "^14.2.0"
+  }
+}

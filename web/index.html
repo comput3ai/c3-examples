@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Examples from C3-Examples</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0a0a0a;
+      color: #ffffff;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+      padding: 3rem 0;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      font-size: 1.25rem;
+      color: #9ca3af;
+    }
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .example-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 2rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .example-card:hover {
+      transform: translateY(-4px);
+      border-color: #667eea;
+    }
+    .example-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+    .example-card p {
+      color: #9ca3af;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .example-card a {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .example-card a:hover {
+      opacity: 0.9;
+    }
+    .placeholder {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Web Examples from C3-Examples</h1>
+      <p class="subtitle">Interactive demos showcasing Comput3's AI capabilities</p>
+    </header>
+    
+    <main>
+      <div class="examples-grid" id="examples-grid">
+        <div class="placeholder">
+          <p>Examples coming soon! Each subdirectory will be a complete Vite React landing page demonstrating different Comput3 features.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // This will be populated dynamically as examples are added
+    const examples = [
+          {
+                "title": "001 C3 Chat Example",
+                "description": "A Comput3 example application",
+                "path": "/001-c3-chat-example"
+          },
+          {
+                "title": "002 C3 Chat Gpu Example",
+                "description": "A Comput3 example application",
+                "path": "/002-c3-chat-gpu-example"
+          },
+          {
+                "title": "003 C3 Comfyui Example",
+                "description": "A Comput3 example application",
+                "path": "/003-c3-comfyui-example"
+          },
+          {
+                "title": "Sample Example",
+                "description": "A sample Vite React app demonstrating the project structure",
+                "path": "/sample-example"
+          }
+    ];
+
+    if (examples.length > 0) {
+      const grid = document.getElementById('examples-grid');
+      grid.innerHTML = examples.map(example => `
+        <div class="example-card">
+          <h2>${example.title}</h2>
+          <p>${example.description}</p>
+          <a href="${example.path}">View Demo →</a>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+[build]
+  base = "web"
+  publish = "dist"
+  command = "npm run build-all"
+
+[build.environment]
+  NODE_VERSION = "18"
+  # Production API endpoints - no CORS proxy needed in production
+  VITE_LB_URL = "https://app.comput3.ai/tags/all/v1"
+  VITE_API_URL = "https://api.comput3.ai/api/v0"
+
+# Redirect rules for SPA routing in subdirectories
+[[redirects]]
+  from = "/*/index.html"
+  to = "/:splat/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
