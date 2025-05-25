@@ -16,7 +16,7 @@ document.querySelector('#app').innerHTML = `
     <div class="chat-header">
       <h1>C3 Chat</h1>
       <div class="api-key-container">
-        <input type="text" id="api-key" placeholder="Enter your Comput3 API key (or set VITE_C3_API_KEY in .env)" />
+        <input type="text" id="api-key" placeholder="Enter your Comput3 API key (auto-detected from cookie if available)" />
         <select id="model-select">
           <option value="llama3:70b">Llama3:70B (Free)</option>
           <option value="hermes3:70b">Hermes3:70B (Premium)</option>
@@ -27,7 +27,7 @@ document.querySelector('#app').innerHTML = `
     <div class="messages-container" id="messages-container">
       <div class="message system-message">
         <div class="message-content">
-          <p>Hello! I'm powered by Comput3's API. Enter your API key or set VITE_C3_API_KEY in your .env file to start chatting with real LLM technology.</p>
+          <p>Hello! I'm powered by Comput3's API. Your API key will be automatically detected from the c3_api_key cookie if available, or you can enter it manually.</p>
           <p>You can use <strong>markdown</strong> in your messages and I'll respond with formatted text!</p>
         </div>
       </div>
@@ -51,8 +51,21 @@ const sendButton = document.getElementById('send-button');
 const apiKeyInput = document.getElementById('api-key');
 const modelSelect = document.getElementById('model-select');
 
-// Set API key from environment variable if available
-if (import.meta.env.VITE_C3_API_KEY) {
+// Function to get cookie value by name
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Check for API key in this order: cookie, environment variable
+const cookieApiKey = getCookie('c3_api_key');
+if (cookieApiKey) {
+  apiKeyInput.value = cookieApiKey;
+  apiKeyInput.type = 'password';
+  apiKeyInput.placeholder = 'API key set from cookie';
+} else if (import.meta.env.VITE_C3_API_KEY) {
   apiKeyInput.value = import.meta.env.VITE_C3_API_KEY;
   apiKeyInput.type = 'password';
   apiKeyInput.placeholder = 'API key set from environment variable';
@@ -110,12 +123,12 @@ function addMessage(text, isUser = false, isLoading = false) {
 
 // Function to get response from Comput3 API
 async function getAIResponse(userMessage) {
-  // Get API key from input field or environment variable
-  const apiKey = apiKeyInput.value.trim() || import.meta.env.VITE_C3_API_KEY;
+  // Get API key from input field, cookie, or environment variable
+  const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   const model = modelSelect.value;
   
   if (!apiKey) {
-    return "Please enter your Comput3 API key in the field above or set VITE_C3_API_KEY in your .env file.";
+    return "Please enter your Comput3 API key in the field above, or ensure it's set as a cookie (c3_api_key) or in your .env file (VITE_C3_API_KEY).";
   }
 
   // Build the prompt from conversation history for better context
