@@ -1,8 +1,9 @@
 import './style.css'
 
 // API Configuration
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.comput3.ai/api/v0';
-const CORS_PROXY = import.meta.env.VITE_CORS_PROXY || 'http://localhost:8080';
+const CORS_PROXY = import.meta.env.VITE_CORS_PROXY || '';
+const BASE_API_URL = 'https://api.comput3.ai/api/v0';
+const API_URL = CORS_PROXY ? `${CORS_PROXY}/${BASE_API_URL}` : BASE_API_URL;
 const POLLING_INTERVAL = 5000; // 5 seconds between status checks
 
 // Default ComfyUI workflow template
@@ -177,13 +178,8 @@ const DEFAULT_WORKFLOW = {
 
 // Function to build API URL with CORS proxy if needed
 function buildApiUrl(endpoint) {
-  if (import.meta.env.DEV && CORS_PROXY) {
-    // In development, use the CORS proxy
-    return `${CORS_PROXY}/${API_URL}${endpoint}`;
-  } else {
-    // In production, use the direct API URL
-    return `${API_URL}${endpoint}`;
-  }
+  // API_URL already includes CORS proxy if defined
+  return `${API_URL}${endpoint}`;
 }
 
 // Function to build ComfyUI URL with CORS proxy if needed
@@ -191,11 +187,11 @@ function buildComfyUIUrl(nodeHostname) {
   const comfyuiHostname = getComfyUIHostname(nodeHostname);
   const baseUrl = `https://${comfyuiHostname}`;
   
-  if (import.meta.env.DEV && CORS_PROXY) {
-    // In development, use the CORS proxy
+  if (CORS_PROXY) {
+    // Use the CORS proxy when defined
     return `${CORS_PROXY}/${baseUrl}`;
   } else {
-    // In production, use the direct URL
+    // Use the direct URL
     return baseUrl;
   }
 }
@@ -214,7 +210,7 @@ document.querySelector('#app').innerHTML = `
     <div class="header">
       <h1>ComfyUI Workflow</h1>
       <div class="api-key-container">
-        <input type="text" id="api-key" placeholder="Enter your Comput3 API key (or set VITE_C3_API_KEY in .env)" />
+        <input type="text" id="api-key" placeholder="Enter your Comput3 API key (auto-detected from cookie if available)" />
       </div>
     </div>
     
@@ -316,8 +312,35 @@ let currentInstance = null;
 let promptId = null;
 let generationCancelled = false;
 
-// Set API key from environment variable if available
-if (import.meta.env.VITE_C3_API_KEY) {
+// Function to get cookie value by name
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Function to set cookie value
+function setCookie(name, value, days = 365) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = `expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${value};${expires};path=/;SameSite=Lax`;
+}
+
+// Check for API key in this order: cookie, environment variable
+const cookieApiKey = getCookie('c3_api_key');
+if (cookieApiKey) {
+  apiKeyInput.value = cookieApiKey;
+  apiKeyInput.type = 'password';
+  apiKeyInput.placeholder = 'API key set from cookie';
+  
+  // Enable launch button if API key is available
+  launchInstanceButton.disabled = false;
+  
+  // Check for instance automatically if API key is available
+  setTimeout(() => checkForRunningInstance(), 500);
+} else if (import.meta.env.VITE_C3_API_KEY) {
   apiKeyInput.value = import.meta.env.VITE_C3_API_KEY;
   apiKeyInput.type = 'password';
   apiKeyInput.placeholder = 'API key set from environment variable';
@@ -330,8 +353,15 @@ if (import.meta.env.VITE_C3_API_KEY) {
 }
 
 // Update API key event listener
-apiKeyInput.addEventListener('input', () => {
-  launchInstanceButton.disabled = !apiKeyInput.value.trim();
+apiKeyInput.addEventListener('input', (e) => {
+  const apiKey = e.target.value.trim();
+  launchInstanceButton.disabled = !apiKey;
+  
+  if (apiKey) {
+    setCookie('c3_api_key', apiKey);
+    apiKeyInput.type = 'password';
+    apiKeyInput.placeholder = 'API key saved to cookie';
+  }
 });
 
 // Store file objects
@@ -365,7 +395,7 @@ function updateProgress(percentage, statusText, isProcessing = false) {
 
 // Check for running ComfyUI instances
 async function checkForRunningInstance() {
-  const apiKey = apiKeyInput.value.trim() || import.meta.env.VITE_C3_API_KEY;
+  const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   
   if (!apiKey) {
     instanceStatusMessage.textContent = "Please enter your API key to check for instances";
@@ -419,7 +449,7 @@ async function checkForRunningInstance() {
 
 // Launch a new ComfyUI instance
 async function launchNewInstance() {
-  const apiKey = apiKeyInput.value.trim() || import.meta.env.VITE_C3_API_KEY;
+  const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   
   if (!apiKey) {
     instanceStatusMessage.textContent = "Please enter your API key to launch an instance";
@@ -476,7 +506,7 @@ async function stopInstance() {
     return;
   }
   
-  const apiKey = apiKeyInput.value.trim() || import.meta.env.VITE_C3_API_KEY;
+  const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   
   instanceStatusMessage.textContent = "Stopping instance...";
   instanceStatusMessage.className = "loading";
@@ -561,7 +591,7 @@ function cancelGeneration() {
   if (!promptId || !currentInstance) return;
   
   generationCancelled = true;
-  const apiKey = apiKeyInput.value.trim() || import.meta.env.VITE_C3_API_KEY;
+  const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   
   try {
     const comfyuiUrl = buildComfyUIUrl(currentInstance.node);
@@ -587,7 +617,7 @@ function cancelGeneration() {
 
 // First upload the files then run the workflow
 async function processFiles() {
-  const apiKey = apiKeyInput.value.trim() || import.meta.env.VITE_C3_API_KEY;
+  const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   
   if (!apiKey) {
     statusMessage.textContent = "Please enter your Comput3 API key";

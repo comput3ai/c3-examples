@@ -37,8 +37,25 @@ examples.forEach(example => {
       execSync('npm install', { cwd: examplePath, stdio: 'inherit' });
     }
     
-    // Build the project
-    execSync('npm run build', { cwd: examplePath, stdio: 'inherit' });
+    // Build the project with environment variables from parent directory
+    const env = { ...process.env };
+    
+    // Load parent .env file if it exists
+    const parentEnvPath = path.join(webDir, '.env');
+    if (fs.existsSync(parentEnvPath)) {
+      const envContent = fs.readFileSync(parentEnvPath, 'utf-8');
+      envContent.split('\n').forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine && !trimmedLine.startsWith('#')) {
+          const [key, ...valueParts] = trimmedLine.split('=');
+          if (key) {
+            env[key.trim()] = valueParts.join('=').trim();
+          }
+        }
+      });
+    }
+    
+    execSync('npm run build', { cwd: examplePath, stdio: 'inherit', env });
     
     // Copy the built files to the main dist directory
     const exampleDist = path.join(examplePath, 'dist');

@@ -59,6 +59,14 @@ function getCookie(name) {
   return null;
 }
 
+// Function to set cookie value
+function setCookie(name, value, days = 365) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = `expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${value};${expires};path=/;SameSite=Lax`;
+}
+
 // Check for API key in this order: cookie, environment variable
 const cookieApiKey = getCookie('c3_api_key');
 if (cookieApiKey) {
@@ -121,53 +129,52 @@ function addMessage(text, isUser = false, isLoading = false) {
   return messageDiv;
 }
 
-// Function to get response from Comput3 API
-async function getAIResponse(userMessage) {
+// Function to get response from Comput3 API with streaming
+async function* getAIResponseStream(userMessage) {
   // Get API key from input field, cookie, or environment variable
   const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
   const model = modelSelect.value;
   
   if (!apiKey) {
-    return "Please enter your Comput3 API key in the field above, or ensure it's set as a cookie (c3_api_key) or in your .env file (VITE_C3_API_KEY).";
+    yield "Please enter your Comput3 API key in the field above, or ensure it's set as a cookie (c3_api_key) or in your .env file (VITE_C3_API_KEY).";
+    return;
   }
 
-  // Build the prompt from conversation history for better context
-  let fullPrompt = "";
+  // Build messages array for chat completions format
+  const messages = [];
   
-  // Format conversation history into a prompt the LLM can understand
+  // Add conversation history
   conversationHistory.forEach(msg => {
-    if (msg.role === 'user') {
-      fullPrompt += `Human: ${msg.content}\n`;
-    } else if (msg.role === 'assistant') {
-      fullPrompt += `Assistant: ${msg.content}\n`;
-    }
+    messages.push({
+      role: msg.role,
+      content: msg.content
+    });
   });
   
-  // Add current message if not already in history
-  if (conversationHistory.length === 0 || 
-      conversationHistory[conversationHistory.length - 1].content !== userMessage) {
-    fullPrompt += `Human: ${userMessage}\nAssistant:`;
-  }
+  // Add current message
+  messages.push({
+    role: 'user',
+    content: userMessage
+  });
   
   try {
-    console.log("Sending request to Comput3 API:", {
+    console.log("Sending streaming request to Comput3 API:", {
       model: model,
-      prompt: fullPrompt
+      messages: messages
     });
     
-    const response = await fetch('https://api.comput3.ai/v1/completions', {
+    const response = await fetch('https://api.comput3.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        prompt: fullPrompt,
         model: model,
-        max_tokens: 1000,
+        messages: messages,
         temperature: 0.7,
-        top_p: 0.9,
-        stop: ["Human:", "\nHuman:"]
+        max_tokens: 1000,
+        stream: true
       })
     });
     
@@ -177,25 +184,44 @@ async function getAIResponse(userMessage) {
       throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
     }
     
-    const data = await response.json();
-    console.log("API response:", data);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
     
-    if (data.choices && data.choices.length > 0) {
-      // Clean up the response text
-      let responseText = data.choices[0].text.trim();
+    while (true) {
+      const { done, value } = await reader.read();
       
-      // Remove "Assistant:" prefix if present
-      if (responseText.startsWith("Assistant:")) {
-        responseText = responseText.substring("Assistant:".length).trim();
+      if (done) break;
+      
+      buffer += decoder.decode(value, { stream: true });
+      
+      // Process complete SSE messages
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+      
+      for (const line of lines) {
+        if (line.trim() === '') continue;
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          
+          if (data === '[DONE]') {
+            return;
+          }
+          
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+              yield parsed.choices[0].delta.content;
+            }
+          } catch (e) {
+            console.error('Error parsing SSE data:', e);
+          }
+        }
       }
-      
-      return responseText;
-    } else {
-      throw new Error("No response generated from the API");
     }
   } catch (error) {
     console.error('API error:', error);
-    return `Error: ${error.message || 'Failed to connect to API'}`;
+    yield `Error: ${error.message || 'Failed to connect to API'}`;
   }
 }
 
@@ -210,20 +236,49 @@ async function sendMessage() {
     userInput.value = '';
     userInput.style.height = 'auto';
     
-    // Show loading indicator
-    const loadingMessage = addMessage('', false, true);
+    // Create a new message for streaming response
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message assistant-message';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    messageDiv.appendChild(contentDiv);
+    messagesContainer.appendChild(messageDiv);
+    
+    // Scroll to the bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    let fullResponse = '';
     
     try {
-      // Get AI response
-      const aiResponse = await getAIResponse(message);
+      // Get streaming AI response
+      for await (const chunk of getAIResponseStream(message)) {
+        fullResponse += chunk;
+        
+        // Convert markdown to HTML and update the content
+        const htmlContent = sanitizeHTML(marked.parse(fullResponse));
+        contentDiv.innerHTML = htmlContent;
+        
+        // Keep scrolling to bottom as content streams in
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
       
-      // Replace loading message with actual response
-      messagesContainer.removeChild(loadingMessage);
-      addMessage(aiResponse, false);
+      // Add the complete response to conversation history
+      conversationHistory.push({
+        role: 'assistant',
+        content: fullResponse
+      });
+      
     } catch (error) {
-      // Replace loading message with error
-      messagesContainer.removeChild(loadingMessage);
-      addMessage(`Error: ${error.message}`, false);
+      // Update the message with error
+      fullResponse = `Error: ${error.message}`;
+      contentDiv.innerHTML = fullResponse;
+      
+      // Add error to conversation history
+      conversationHistory.push({
+        role: 'assistant',
+        content: fullResponse
+      });
     }
   }
 }
@@ -241,4 +296,14 @@ userInput.addEventListener('keypress', (e) => {
 userInput.addEventListener('input', () => {
   userInput.style.height = 'auto';
   userInput.style.height = userInput.scrollHeight + 'px';
+});
+
+// Save API key to cookie when it changes
+apiKeyInput.addEventListener('input', (e) => {
+  const apiKey = e.target.value.trim();
+  if (apiKey) {
+    setCookie('c3_api_key', apiKey);
+    apiKeyInput.type = 'password';
+    apiKeyInput.placeholder = 'API key saved to cookie';
+  }
 });
