@@ -219,11 +219,8 @@ async function* getAIResponseStream(userMessage) {
     });
   });
   
-  // Add current message
-  messages.push({
-    role: 'user',
-    content: userMessage
-  });
+  // Current message is already in history from addMessage() call
+  // No need to add it again
   
   try {
     console.log("Sending streaming request to API:", {
