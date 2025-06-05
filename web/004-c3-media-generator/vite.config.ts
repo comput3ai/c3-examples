@@ -4,6 +4,7 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/004-c3-media-generator/',
   plugins: [react()],
   resolve: {
     alias: {
