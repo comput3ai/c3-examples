@@ -1,0 +1,52 @@
+{
+  "name": "ai-card-generator",
+  "private": false,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI Media Studio - A powerful React-based platform for generating images and videos using ComfyUI workflows on the C3 GPU cluster",
+  "keywords": ["ai", "media-generator", "image-generation", "video-generation", "comfyui", "gpu-cluster", "react", "typescript"],
+  "author": "C3 AI Media Studio Team",
+  "license": "MIT",
+  "homepage": "https://ai-card-generator.netlify.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/ai-card-generator.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build-with-types": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^4.4.7",
+    "papaparse": "^5.4.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.294.0",
+    "clsx": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@types/papaparse": "^5.3.14",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+} 
