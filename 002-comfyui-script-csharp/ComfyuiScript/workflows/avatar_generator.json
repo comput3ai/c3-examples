@@ -1,0 +1,167 @@
+{
+    "13": {
+      "inputs": {
+        "frame_rate": [
+          "31",
+          1
+        ],
+        "loop_count": 0,
+        "filename_prefix": "Video",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true,
+        "images": [
+          "31",
+          0
+        ],
+        "audio": [
+          "26",
+          0
+        ]
+      },
+      "class_type": "VHS_VideoCombine",
+      "_meta": {
+        "title": "Video Combine 🎥🅥🅗🅢"
+      }
+    },
+    "18": {
+      "inputs": {
+        "image": "comput3ai.png"
+      },
+      "class_type": "LoadImage",
+      "_meta": {
+        "title": "Load a portrait Image (Face Closeup)"
+      }
+    },
+    "21": {
+      "inputs": {
+        "images": [
+          "46",
+          0
+        ]
+      },
+      "class_type": "PreviewImage",
+      "_meta": {
+        "title": "Preview Image after Resize"
+      }
+    },
+    "26": {
+      "inputs": {
+        "audio": "welcome.flac"
+      },
+      "class_type": "LoadAudio",
+      "_meta": {
+        "title": "LoadAudio"
+      }
+    },
+    "31": {
+      "inputs": {
+        "seed": 1911539912,
+        "inference_steps": 25,
+        "dynamic_scale": 1,
+        "fps": 25,
+        "model": [
+          "34",
+          0
+        ],
+        "data_dict": [
+          "35",
+          0
+        ]
+      },
+      "class_type": "SONICSampler",
+      "_meta": {
+        "title": "SONICSampler"
+      }
+    },
+    "32": {
+      "inputs": {
+        "ckpt_name": "svd_xt.safetensors"
+      },
+      "class_type": "ImageOnlyCheckpointLoader",
+      "_meta": {
+        "title": "Image Only Checkpoint Loader (img2vid model)"
+      }
+    },
+    "33": {
+      "inputs": {
+        "min_resolution": 576,
+        "duration": 5,
+        "expand_ratio": 1,
+        "clip_vision": [
+          "32",
+          1
+        ],
+        "vae": [
+          "32",
+          2
+        ],
+        "audio": [
+          "26",
+          0
+        ],
+        "image": [
+          "46",
+          0
+        ],
+        "weight_dtype": [
+          "34",
+          1
+        ]
+      },
+      "class_type": "SONIC_PreData",
+      "_meta": {
+        "title": "SONIC_PreData"
+      }
+    },
+    "34": {
+      "inputs": {
+        "sonic_unet": "unet.pth",
+        "ip_audio_scale": 1,
+        "use_interframe": true,
+        "dtype": "fp16",
+        "model": [
+          "32",
+          0
+        ]
+      },
+      "class_type": "SONICTLoader",
+      "_meta": {
+        "title": "SONICTLoader"
+      }
+    },
+    "35": {
+      "inputs": {
+        "anything": [
+          "33",
+          0
+        ]
+      },
+      "class_type": "easy cleanGpuUsed",
+      "_meta": {
+        "title": "Clean VRAM Used"
+      }
+    },
+    "46": {
+      "inputs": {
+        "mode": "resize",
+        "supersample": "true",
+        "resampling": "lanczos",
+        "rescale_factor": 1,
+        "resize_width": 576,
+        "resize_height": 576,
+        "image": [
+          "18",
+          0
+        ]
+      },
+      "class_type": "Image Resize",
+      "_meta": {
+        "title": "Image Resize"
+      }
+    }
+  }

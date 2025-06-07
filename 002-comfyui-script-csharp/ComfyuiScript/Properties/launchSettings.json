@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "VisionModel": {
+        "commandName": "Project",
+        "commandLineArgs": "-i \"Input/aang.png\" -a \"Input/audio.mp3\" -o \"Output\" -t 15"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
