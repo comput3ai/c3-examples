@@ -64,50 +64,18 @@ export class ComfyUIClient {
       return `${customCorsProxy}/${fullUrl}`
     }
     
-    if (isProduction) {
-      // In production, route through Netlify proxy
-      // Remove protocol and use the new redirect pattern
-      const urlWithoutProtocol = fullUrl.replace(/^https?:\/\//, '')
-      return `/api/comfyui/https/${urlWithoutProtocol}`
-    }
-    
+    // In production on examples.comput3.ai, connect directly to ComfyUI nodes
+    // The CORS should be handled properly by the ComfyUI instances
     return fullUrl
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const url = this.buildUrl(endpoint)
     
-    // Use different headers based on the request method and endpoint
-    const isGetQueue = options.method === 'GET' && endpoint.includes('/queue')
-    
+    // Simplified headers to avoid CORS issues
     const headers: Record<string, string> = {
-      'accept': isGetQueue 
-        ? 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
-        : 'application/json',
-      'accept-language': 'en,en-US;q=0.9,nl;q=0.8',
-      'cache-control': 'no-cache',
-      'dnt': '1',
-      'pragma': 'no-cache',
-      'priority': isGetQueue ? 'u=0, i' : 'u=1, i',
-      'sec-ch-ua': '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'sec-fetch-dest': isGetQueue ? 'document' : 'empty',
-      'sec-fetch-mode': isGetQueue ? 'navigate' : 'cors',
-      'sec-fetch-site': isGetQueue ? 'none' : 'same-site',
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+      'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {})
-    }
-
-    // Add Content-Type for POST requests
-    if (options.method === 'POST') {
-      headers['Content-Type'] = 'application/json'
-    }
-
-    // Add GET-specific headers
-    if (isGetQueue) {
-      headers['sec-fetch-user'] = '?1'
-      headers['upgrade-insecure-requests'] = '1'
     }
 
     // Add C3 API key as cookie if available
