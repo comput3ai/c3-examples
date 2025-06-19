@@ -59,8 +59,20 @@ export class ComfyUIClient {
     const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
     const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
     
+    // Clear any cached CORS proxy settings on production Netlify deployments
+    const hostname = window.location.hostname
+    const isExamplesComput3 = hostname === 'examples.comput3.ai'
+    const isNetlifyApp = hostname.endsWith('.netlify.app')
+    const isNetlifyDeployment = isExamplesComput3 || isNetlifyApp
+    
+    if (isProduction && isNetlifyDeployment) {
+      // Clear any cached CORS proxy settings that might interfere
+      localStorage.removeItem('CORS_PROXY')
+      console.log(`🔍 🧹 Cleared cached CORS proxy settings for Netlify deployment`)
+    }
+    
     // Debug logging
-    console.log(`🔍 buildUrl debug: hostname=${window.location.hostname}, forceDevMode=${forceDevMode}, isProduction=${isProduction}`)
+    console.log(`🔍 buildUrl debug: hostname=${hostname}, forceDevMode=${forceDevMode}, isProduction=${isProduction}`)
     console.log(`🔍 Environment variables: VITE_CORS_PROXY=${customCorsProxy}, VITE_COMFYUI_PROXY=${import.meta.env.VITE_COMFYUI_PROXY}`)
     
     if (!isProduction && customCorsProxy) {
@@ -70,23 +82,21 @@ export class ComfyUIClient {
     }
     
     if (isProduction) {
-      // Check if we're on examples.comput3.ai or other Netlify deployment
-      const isNetlifyDeployment = window.location.hostname.includes('netlify.app') || 
-                                 window.location.hostname.includes('examples.comput3.ai') ||
-                                 window.location.hostname.includes('.netlify.app')
+      // EXPLICIT check for examples.comput3.ai and Netlify deployments
+      console.log(`🔍 Hostname check: examples.comput3.ai=${isExamplesComput3}, netlify.app=${isNetlifyApp}, isNetlifyDeployment=${isNetlifyDeployment}`)
       
       if (isNetlifyDeployment) {
-        // Use centralized Netlify redirects for CORS proxy
+        // ALWAYS use centralized Netlify redirects for CORS proxy
         // Remove protocol and use /api/comfyui/ prefix
         const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
         
-        // Determine if we need explicit HTTPS reconstruction
+        // For HTTPS ComfyUI instances, use the https prefix
         const needsHttpsPrefix = this.baseUrl.startsWith('https://')
         const netlifyProxyUrl = needsHttpsPrefix 
           ? `/api/comfyui/https/${nodeUrl}${endpoint}`
           : `/api/comfyui/${nodeUrl}${endpoint}`
           
-        console.log(`🔍 Using Netlify redirects: ${netlifyProxyUrl}`)
+        console.log(`🔍 ✅ FORCED Netlify redirects: ${netlifyProxyUrl}`)
         return netlifyProxyUrl
       }
       
