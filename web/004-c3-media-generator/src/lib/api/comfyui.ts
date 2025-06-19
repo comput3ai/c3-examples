@@ -70,14 +70,38 @@ export class ComfyUIClient {
     }
     
     if (isProduction) {
-      // In production, use Netlify Functions for proper CORS handling
-      // Extract the node URL from the baseUrl (e.g., https://ui-truly-sadly-close-gpu.comput3.ai)
-      const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
+      // Check if we should use Netlify proxy (centralized configuration)
+      const comfyUIProxy = import.meta.env.VITE_COMFYUI_PROXY
       
-      // Use Netlify Function for ComfyUI proxy
-      const functionUrl = `/.netlify/functions/comfyui-proxy/${nodeUrl}${endpoint}`
-      console.log(`🔍 Using Netlify Function: ${functionUrl}`)
-      return functionUrl
+      if (comfyUIProxy === 'netlify') {
+        // Use centralized Netlify proxy
+        const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
+        const netlifyProxyUrl = `/api/comfyui/${nodeUrl}${endpoint}`
+        console.log(`🔍 Using centralized Netlify proxy: ${netlifyProxyUrl}`)
+        return netlifyProxyUrl
+      }
+      
+      // Fallback to user-configured CORS proxy from localStorage
+      const userCorsProxy = localStorage.getItem('CORS_PROXY')
+      
+      if (userCorsProxy && userCorsProxy.trim()) {
+        // Handle different proxy formats
+        if (userCorsProxy.includes('allorigins.win')) {
+          // AllOrigins format: https://api.allorigins.win/raw?url=
+          const proxyUrl = `${userCorsProxy}${encodeURIComponent(fullUrl)}`
+          console.log(`🔍 Using AllOrigins proxy: ${proxyUrl}`)
+          return proxyUrl
+        } else {
+          // Standard CORS proxy format (like cors-anywhere)
+          const proxyUrl = `${userCorsProxy}/${fullUrl}`
+          console.log(`🔍 Using user CORS proxy: ${proxyUrl}`)
+          return proxyUrl
+        }
+      } else {
+        // Direct connection (no proxy)
+        console.log(`🔍 Using direct connection (no proxy): ${fullUrl}`)
+        return fullUrl
+      }
     }
     
     // In development without proxy, connect directly (will only work with local ComfyUI or proper CORS setup)

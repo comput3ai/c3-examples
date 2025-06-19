@@ -8,8 +8,56 @@
   # Production API endpoints - no CORS proxy needed in production
   VITE_LB_URL = "https://app.comput3.ai/tags/all/v1"
   VITE_API_URL = "https://api.comput3.ai/api/v0"
+  # ComfyUI proxy configuration
+  VITE_COMFYUI_PROXY = "netlify"
 
-# Redirect rules for SPA routing in subdirectories
+# API Proxy redirects to handle CORS (most specific first)
+[[redirects]]
+  from = "/api/comput3/*"
+  to = "https://api.comput3.ai/api/v0/:splat"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"}
+
+# ComfyUI proxy with explicit HTTPS reconstruction
+[[redirects]]
+  from = "/api/comfyui/https/*"
+  to = "https://:splat"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"}
+
+# Fallback ComfyUI proxy for other protocols
+[[redirects]]
+  from = "/api/comfyui/*"
+  to = ":splat"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"}
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache service worker
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Redirect rules for SPA routing in subdirectories (less specific routes last)
 [[redirects]]
   from = "/*/index.html"
   to = "/:splat/index.html"

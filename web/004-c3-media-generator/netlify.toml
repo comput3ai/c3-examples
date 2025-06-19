@@ -6,30 +6,6 @@
   NODE_VERSION = "18"
   NPM_VERSION = "8"
 
-# API Proxy redirects to handle CORS
-[[redirects]]
-  from = "/api/comput3/*"
-  to = "https://api.comput3.ai/api/v0/:splat"
-  status = 200
-  force = true
-  headers = {X-From = "Netlify"}
-
-# ComfyUI proxy with explicit HTTPS reconstruction
-[[redirects]]
-  from = "/api/comfyui/https/*"
-  to = "https://:splat"
-  status = 200
-  force = true
-  headers = {X-From = "Netlify"}
-
-# Fallback ComfyUI proxy for other protocols
-[[redirects]]
-  from = "/api/comfyui/*"
-  to = ":splat"
-  status = 200
-  force = true
-  headers = {X-From = "Netlify"}
-
 # Redirect all requests to index.html for SPA routing
 [[redirects]]
   from = "/*"

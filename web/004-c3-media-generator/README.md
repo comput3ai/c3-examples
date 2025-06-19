@@ -115,6 +115,12 @@ name,description,rarity,type,flavor_text
 - **Prompt Mapping**: Automatic assignment of CSV data to workflow inputs
 - **Custom Workflows**: Upload and configure your own generation pipelines
 
+### **CORS Proxy Configuration**
+- **Centralized Netlify Proxy**: Automatic CORS handling in production via main `netlify.toml`
+- **Development Flexibility**: Configure custom CORS proxy for local development
+- **Fallback Support**: User-configurable proxy options for different hosting environments
+- **Environment Variables**: `VITE_COMFYUI_PROXY=netlify` enables centralized proxy routing
+
 ### **Smart Generation**
 - **Parallel Processing**: Distribute jobs across multiple GPUs
 - **Progress Tracking**: Real-time status updates for each generation
