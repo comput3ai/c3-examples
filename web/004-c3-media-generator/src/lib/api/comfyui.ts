@@ -59,29 +59,29 @@ export class ComfyUIClient {
     const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
     const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
     
+    // Debug logging
+    console.log(`🔍 buildUrl debug: hostname=${window.location.hostname}, forceDevMode=${forceDevMode}, isProduction=${isProduction}`)
+    console.log(`🔍 Environment variables: VITE_CORS_PROXY=${customCorsProxy}, VITE_COMFYUI_PROXY=${import.meta.env.VITE_COMFYUI_PROXY}`)
+    
     if (!isProduction && customCorsProxy) {
       // In development with custom CORS proxy, prefix the full URL with the proxy
+      console.log(`🔍 Using development proxy: ${customCorsProxy}/${fullUrl}`)
       return `${customCorsProxy}/${fullUrl}`
     }
     
     if (isProduction) {
-      // In production, use CORS proxy server to handle ComfyUI CORS issues
+      // In production, use Netlify Functions for proper CORS handling
       // Extract the node URL from the baseUrl (e.g., https://ui-truly-sadly-close-gpu.comput3.ai)
       const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
       
-      // Use configurable CORS proxy server, or fallback to Netlify redirects
-      const externalProxy = import.meta.env.VITE_COMFYUI_PROXY
-      
-      if (externalProxy && externalProxy !== 'netlify') {
-        // Use external proxy server
-        return `${externalProxy}/comfyui/${nodeUrl}${endpoint}`
-      } else {
-        // Use Netlify redirects as fallback
-        return `/api/comfyui-proxy/${nodeUrl}${endpoint}`
-      }
+      // Use Netlify Function for ComfyUI proxy
+      const functionUrl = `/.netlify/functions/comfyui-proxy/${nodeUrl}${endpoint}`
+      console.log(`🔍 Using Netlify Function: ${functionUrl}`)
+      return functionUrl
     }
     
     // In development without proxy, connect directly (will only work with local ComfyUI or proper CORS setup)
+    console.log(`🔍 Using direct URL: ${fullUrl}`)
     return fullUrl
   }
 

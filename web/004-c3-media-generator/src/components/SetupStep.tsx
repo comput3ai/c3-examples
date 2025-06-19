@@ -167,7 +167,7 @@ export function SetupStep() {
 
       {/* Version info for deployment verification */}
       <div className="text-center text-xs text-gray-500">
-        <p>AI Media Studio v1.2.1 • Build {new Date().toISOString().slice(0, 10)}</p>
+        <p>AI Media Studio v1.3.0 • Build {new Date().toISOString().slice(0, 10)}</p>
       </div>
     </div>
   )
