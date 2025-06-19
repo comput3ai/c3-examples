@@ -70,14 +70,23 @@ export class ComfyUIClient {
     }
     
     if (isProduction) {
-      // Check if we should use Netlify proxy (centralized configuration)
-      const comfyUIProxy = import.meta.env.VITE_COMFYUI_PROXY
+      // Check if we're on examples.comput3.ai or other Netlify deployment
+      const isNetlifyDeployment = window.location.hostname.includes('netlify.app') || 
+                                 window.location.hostname.includes('examples.comput3.ai') ||
+                                 window.location.hostname.includes('.netlify.app')
       
-      if (comfyUIProxy === 'netlify') {
-        // Use centralized Netlify proxy
+      if (isNetlifyDeployment) {
+        // Use centralized Netlify redirects for CORS proxy
+        // Remove protocol and use /api/comfyui/ prefix
         const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
-        const netlifyProxyUrl = `/api/comfyui/${nodeUrl}${endpoint}`
-        console.log(`🔍 Using centralized Netlify proxy: ${netlifyProxyUrl}`)
+        
+        // Determine if we need explicit HTTPS reconstruction
+        const needsHttpsPrefix = this.baseUrl.startsWith('https://')
+        const netlifyProxyUrl = needsHttpsPrefix 
+          ? `/api/comfyui/https/${nodeUrl}${endpoint}`
+          : `/api/comfyui/${nodeUrl}${endpoint}`
+          
+        console.log(`🔍 Using Netlify redirects: ${netlifyProxyUrl}`)
         return netlifyProxyUrl
       }
       

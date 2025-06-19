@@ -8,8 +8,6 @@
   # Production API endpoints - no CORS proxy needed in production
   VITE_LB_URL = "https://app.comput3.ai/tags/all/v1"
   VITE_API_URL = "https://api.comput3.ai/api/v0"
-  # ComfyUI proxy configuration
-  VITE_COMFYUI_PROXY = "netlify"
 
 # API Proxy redirects to handle CORS (most specific first)
 [[redirects]]
