@@ -164,6 +164,11 @@ export function SetupStep() {
           <li>4. Generate a new API key</li>
         </ol>
       </div>
+
+      {/* Version info for deployment verification */}
+      <div className="text-center text-xs text-gray-500">
+        <p>AI Media Studio v1.2.1 • Build {new Date().toISOString().slice(0, 10)}</p>
+      </div>
     </div>
   )
 } 

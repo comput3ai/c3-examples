@@ -40,22 +40,7 @@ export class Comput3Client {
 
   private getHeaders(): HeadersInit {
     const headers: Record<string, string> = {
-      'accept': '*/*',
-      'accept-language': 'en,en-US;q=0.9,nl;q=0.8',
-      'cache-control': 'no-cache',
       'content-type': 'application/json',
-      'dnt': '1',
-      'origin': 'https://launch.comput3.ai',
-      'pragma': 'no-cache',
-      'priority': 'u=1, i',
-      'referer': 'https://launch.comput3.ai/',
-      'sec-ch-ua': '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'sec-fetch-dest': 'empty',
-      'sec-fetch-mode': 'cors',
-      'sec-fetch-site': 'same-site',
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
       'x-c3-api-key': this.apiKey
     }
 
