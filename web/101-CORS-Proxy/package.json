@@ -1,0 +1,16 @@
+{
+  "name": "cors-proxy",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "CORS proxy for local development with C3 Examples",
+  "dependencies": {
+    "cors-anywhere": "^0.4.4",
+    "express": "^5.1.0"
+  }
+}

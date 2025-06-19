@@ -86,6 +86,22 @@ const BUILTIN_WORKFLOWS: Array<{
   }
 ]
 
+// Helper function to get the correct base path for workflow files
+function getWorkflowBasePath(): string {
+  // Check if we're running on the actual base path
+  const currentPath = window.location.pathname
+  const hasBasePath = currentPath.startsWith('/004-c3-media-generator/')
+  
+  // In development without base path (pure dev server)
+  if (import.meta.env.DEV && !hasBasePath) {
+    return '/workflows/'
+  } 
+  // In production or when served with base path
+  else {
+    return '/004-c3-media-generator/workflows/'
+  }
+}
+
 export const useWorkflowStore = create<WorkflowStore>((set, get) => {
   const analyzer = new WorkflowAnalyzer()
   
@@ -112,7 +128,11 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => {
           try {
             console.log(`🔄 Loading built-in workflow: ${builtinConfig.name} from ${builtinConfig.url}`)
             
-            const response = await fetch(builtinConfig.url)
+            // Use the correct base path for the workflow URL
+            const workflowBasePath = getWorkflowBasePath()
+            const workflowUrl = `${workflowBasePath}${builtinConfig.url.replace(/^\/workflows\//, '')}`
+            
+            const response = await fetch(workflowUrl)
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`)
             }

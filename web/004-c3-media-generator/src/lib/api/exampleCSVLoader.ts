@@ -34,6 +34,22 @@ export class ExampleCSVLoader {
     return ExampleCSVLoader.instance
   }
 
+  // Helper method to get the correct base path for CSV files
+  private getCSVBasePath(): string {
+    // Check if we're running on the actual base path
+    const currentPath = window.location.pathname
+    const hasBasePath = currentPath.startsWith('/004-c3-media-generator/')
+    
+    // In development without base path (pure dev server)
+    if (import.meta.env.DEV && !hasBasePath) {
+      return '/examplecsvs/'
+    } 
+    // In production or when served with base path
+    else {
+      return '/004-c3-media-generator/examplecsvs/'
+    }
+  }
+
   async loadExamples(): Promise<CSVExample[]> {
     if (this.isLoaded) {
       return this.examples
@@ -83,10 +99,11 @@ export class ExampleCSVLoader {
 
     // Verify that the files actually exist by making HEAD requests
     const availableFiles: string[] = []
+    const csvBasePath = this.getCSVBasePath()
     
     for (const fileName of discoveredFiles) {
       try {
-        const response = await fetch(`/examplecsvs/${fileName}`, { method: 'HEAD' })
+        const response = await fetch(`${csvBasePath}${fileName}`, { method: 'HEAD' })
         if (response.ok) {
           availableFiles.push(fileName)
         }
@@ -100,7 +117,8 @@ export class ExampleCSVLoader {
   }
 
   private async loadAndAnalyzeExample(fileName: string): Promise<CSVExample> {
-    const response = await fetch(`/examplecsvs/${fileName}`)
+    const csvBasePath = this.getCSVBasePath()
+    const response = await fetch(`${csvBasePath}${fileName}`)
     if (!response.ok) {
       throw new Error(`Failed to fetch ${fileName}: ${response.statusText}`)
     }
@@ -160,7 +178,8 @@ export class ExampleCSVLoader {
 
   // Method to use an example as if it was uploaded
   async useExample(example: CSVExample): Promise<{ data: any[], analysis: DynamicCSVAnalysis }> {
-    const response = await fetch(`/examplecsvs/${example.fileName}`)
+    const csvBasePath = this.getCSVBasePath()
+    const response = await fetch(`${csvBasePath}${example.fileName}`)
     if (!response.ok) {
       throw new Error(`Failed to fetch ${example.fileName}: ${response.statusText}`)
     }
@@ -194,7 +213,8 @@ export class ExampleCSVLoader {
   // Method to check if a specific file exists
   async checkFileExists(fileName: string): Promise<boolean> {
     try {
-      const response = await fetch(`/examplecsvs/${fileName}`, { method: 'HEAD' })
+      const csvBasePath = this.getCSVBasePath()
+      const response = await fetch(`${csvBasePath}${fileName}`, { method: 'HEAD' })
       return response.ok
     } catch (error) {
       return false

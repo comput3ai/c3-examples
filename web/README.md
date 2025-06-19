@@ -47,8 +47,9 @@ cp env.sample .env  # or create manually
 Example `.env` content:
 ```env
 # CORS proxy for local development (optional)
-# Only needed if you encounter CORS errors
-VITE_CORS_PROXY=http://localhost:3000
+# Only needed if you encounter CORS errors with api.comput3.ai
+# See 101-CORS-Proxy/README.md for setup instructions
+VITE_CORS_PROXY=http://localhost:8080
 
 # Comput3 API endpoints (optional - defaults are usually fine)
 VITE_LB_URL=https://app.comput3.ai/tags/all/v1
@@ -56,7 +57,7 @@ VITE_API_URL=https://api.comput3.ai/api/v0
 ```
 
 Environment variables:
-- `VITE_CORS_PROXY`: CORS proxy for local development (only set if needed)
+- `VITE_CORS_PROXY`: CORS proxy for local development (only set if needed - see [CORS Proxy Guide](101-CORS-Proxy/README.md))
 - `VITE_LB_URL`: Comput3 load balancer URL (has open CORS, proxy not needed)
 - `VITE_API_URL`: Comput3 API base URL (may need CORS proxy in development)
 
@@ -65,6 +66,24 @@ Environment variables:
 - When using `npm run build-all`, environment variables from `/web/.env` are passed to all examples
 - The load balancer (`app.comput3.ai`) has open CORS and doesn't need a proxy
 - Direct API calls to `api.comput3.ai` may need a CORS proxy in local development
+
+### CORS Proxy for Local Development
+
+If you encounter CORS errors during local development, you can use the included CORS proxy:
+
+1. **Setup the proxy**: See [101-CORS-Proxy/README.md](101-CORS-Proxy/README.md) for detailed instructions
+2. **Quick start**:
+   ```bash
+   cd web/101-CORS-Proxy
+   npm install
+   npm start  # or: node server.js
+   ```
+3. **Add to your `.env`**:
+   ```env
+   VITE_CORS_PROXY=http://localhost:8080
+   ```
+
+The proxy is only needed for direct API calls to `api.comput3.ai` and not required for production deployments.
 
 ### Production Setup
 Production environment variables are configured in `netlify.toml`. No CORS proxy is needed in production as the APIs support CORS for the deployed domain.

@@ -108,10 +108,23 @@ export default function WorkflowManagerModal({ isOpen, onClose, onWorkflowReady 
   // Handle built-in workflow selection with pre-configuration
   const handleBuiltinWorkflowSelect = async (builtinWorkflow: typeof BUILTIN_WORKFLOWS[0]) => {
     try {
-      // Load the actual workflow data
+      // Helper function to get the correct base path for workflow files
+      const getWorkflowBasePath = (): string => {
+        const currentPath = window.location.pathname
+        const hasBasePath = currentPath.startsWith('/004-c3-media-generator/')
+        
+        if (import.meta.env.DEV && !hasBasePath) {
+          return '/workflows/'
+        } else {
+          return '/004-c3-media-generator/workflows/'
+        }
+      }
+      
+      // Load the actual workflow data with correct base path
+      const workflowBasePath = getWorkflowBasePath()
       const workflowUrl = builtinWorkflow.id === 'text-to-image' 
-        ? '/workflows/text_to_image.json' 
-        : '/workflows/text-to-video.json'
+        ? `${workflowBasePath}text_to_image.json`
+        : `${workflowBasePath}text-to-video.json`
       
       await loadWorkflowFromUrl(workflowUrl, {
         name: builtinWorkflow.name,

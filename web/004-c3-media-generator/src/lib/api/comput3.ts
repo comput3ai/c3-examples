@@ -13,13 +13,17 @@ export class Comput3Client {
     const customApiBase = import.meta.env.VITE_API_BASE_URL
     
     // Use environment variables or auto-detect
-    const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
+    const isProduction = forceDevMode ? false : !isLocalhost
     
     if (customApiBase) {
       // Use custom API base URL (for advanced development scenarios)
       this.baseUrl = customApiBase
+    } else if (isProduction && window.location.hostname.includes('examples.comput3.ai')) {
+      // On examples.comput3.ai, use direct API (CORS is allowed for this domain)
+      this.baseUrl = 'https://api.comput3.ai/api/v0'
     } else if (isProduction) {
-      // Production: Use Netlify proxy
+      // Other production environments: Use Netlify proxy
       this.baseUrl = '/api/comput3'
     } else {
       // Development: Use direct API (through CORS proxy if needed)
@@ -28,6 +32,7 @@ export class Comput3Client {
     
     const environment = isProduction ? 'production' : 'development'
     const proxyInfo = customCorsProxy ? `custom proxy: ${customCorsProxy}` : 
+                     window.location.hostname.includes('examples.comput3.ai') ? 'direct API (CORS allowed)' :
                      isProduction ? 'Netlify proxy' : 'direct API (requires CORS proxy)'
     
     console.log(`🌐 C3 Client initialized for ${environment} - baseUrl: ${this.baseUrl} (${proxyInfo})`)
