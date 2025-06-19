@@ -68,25 +68,17 @@ export class ComfyUIClient {
     if (isProduction && isNetlifyDeployment) {
       // Clear any cached CORS proxy settings that might interfere
       localStorage.removeItem('CORS_PROXY')
-      console.log(`🔍 🧹 Cleared cached CORS proxy settings for Netlify deployment`)
     }
-    
-    // Debug logging
-    console.log(`🔍 buildUrl debug: hostname=${hostname}, forceDevMode=${forceDevMode}, isProduction=${isProduction}`)
-    console.log(`🔍 Environment variables: VITE_CORS_PROXY=${customCorsProxy}, VITE_COMFYUI_PROXY=${import.meta.env.VITE_COMFYUI_PROXY}`)
     
     if (!isProduction && customCorsProxy) {
       // In development with custom CORS proxy, prefix the full URL with the proxy
-      console.log(`🔍 Using development proxy: ${customCorsProxy}/${fullUrl}`)
       return `${customCorsProxy}/${fullUrl}`
     }
     
     if (isProduction) {
-      // EXPLICIT check for examples.comput3.ai and Netlify deployments
-      console.log(`🔍 Hostname check: examples.comput3.ai=${isExamplesComput3}, netlify.app=${isNetlifyApp}, isNetlifyDeployment=${isNetlifyDeployment}`)
-      
+      // Check for Netlify deployments and use centralized redirects
       if (isNetlifyDeployment) {
-        // ALWAYS use centralized Netlify redirects for CORS proxy
+        // Use centralized Netlify redirects for CORS proxy
         // Remove protocol and use /api/comfyui/ prefix
         const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
         
@@ -96,7 +88,6 @@ export class ComfyUIClient {
           ? `/api/comfyui/https/${nodeUrl}${endpoint}`
           : `/api/comfyui/${nodeUrl}${endpoint}`
           
-        console.log(`🔍 ✅ FORCED Netlify redirects: ${netlifyProxyUrl}`)
         return netlifyProxyUrl
       }
       
@@ -107,24 +98,18 @@ export class ComfyUIClient {
         // Handle different proxy formats
         if (userCorsProxy.includes('allorigins.win')) {
           // AllOrigins format: https://api.allorigins.win/raw?url=
-          const proxyUrl = `${userCorsProxy}${encodeURIComponent(fullUrl)}`
-          console.log(`🔍 Using AllOrigins proxy: ${proxyUrl}`)
-          return proxyUrl
+          return `${userCorsProxy}${encodeURIComponent(fullUrl)}`
         } else {
           // Standard CORS proxy format (like cors-anywhere)
-          const proxyUrl = `${userCorsProxy}/${fullUrl}`
-          console.log(`🔍 Using user CORS proxy: ${proxyUrl}`)
-          return proxyUrl
+          return `${userCorsProxy}/${fullUrl}`
         }
       } else {
         // Direct connection (no proxy)
-        console.log(`🔍 Using direct connection (no proxy): ${fullUrl}`)
         return fullUrl
       }
     }
     
-    // In development without proxy, connect directly (will only work with local ComfyUI or proper CORS setup)
-    console.log(`🔍 Using direct URL: ${fullUrl}`)
+    // In development without proxy, connect directly
     return fullUrl
   }
 

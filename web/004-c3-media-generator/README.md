@@ -70,17 +70,50 @@ AI Media Studio is a powerful web application that enables bulk generation of im
 
 ## 🚀 Getting Started
 
-### **1. Setup Your Environment**
-```bash
-npm install
-npm run dev
-```
+### **Quick Setup**
 
-### **2. Configure Your API**
-- Add your C3 API key in the setup step
-- Verify connectivity to C3 infrastructure
+1. **Install Dependencies**
+   ```bash
+   cd web/004-c3-media-generator
+   npm install
+   ```
 
-### **3. Upload Your Data**
+2. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+   
+   For local network access (mobile testing, etc.):
+   ```bash
+   npm run dev:local
+   ```
+
+3. **Configure API Access**
+   - Get your C3 API key from [dashboard.comput3.ai](https://dashboard.comput3.ai)
+   - Enter your API key in the setup step when you first run the app
+
+4. **Environment Configuration (Optional)**
+   ```bash
+   cp .env.example .env
+   # Edit .env if you need custom CORS proxy settings
+   ```
+
+### **Production Deployment**
+
+#### **Netlify (Recommended)**
+1. Fork this repository
+2. Connect to Netlify
+3. Set build settings:
+   - **Base directory**: `web`
+   - **Build command**: `npm run build-all`
+   - **Publish directory**: `dist`
+
+The app includes automatic CORS proxy handling for ComfyUI instances when deployed on Netlify.
+
+#### **Other Hosting Providers**
+For other hosting providers, you may need to configure CORS proxy handling manually or use a custom CORS proxy service.
+
+### **Upload Your Data**
 - **Option A**: Upload a CSV file with your data structure
 - **Option B**: Choose from example datasets (anime characters, fantasy items, etc.)
 
@@ -91,17 +124,17 @@ name,description,rarity,type,flavor_text
 "Ice Sword","Crystalline blade of frost","Rare","Weapon","Cold as winter's heart"
 ```
 
-### **4. Customize Your Prompts**
+### **Customize Your Prompts**
 - Edit prompt templates with CSV variable injection: `{name}`, `{description}`, `{rarity}`
 - Configure conditional enhancements for different rarities or types
 - Preview generated prompts before starting
 
-### **5. Launch GPU Workloads**
+### **Launch GPU Workloads**
 - Select number of GPUs to launch (1-10)
 - Choose runtime duration (15 min - 24 hours)
 - Monitor workload health and availability
 
-### **6. Generate Content**
+### **Generate Content**
 - Choose between **Text-to-Image** or **Text-to-Video** workflows
 - Select number of items to generate (1 to all)
 - Monitor real-time generation progress
@@ -115,11 +148,11 @@ name,description,rarity,type,flavor_text
 - **Prompt Mapping**: Automatic assignment of CSV data to workflow inputs
 - **Custom Workflows**: Upload and configure your own generation pipelines
 
-### **CORS Proxy Configuration**
-- **Centralized Netlify Proxy**: Automatic CORS handling in production via main `netlify.toml`
-- **Development Flexibility**: Configure custom CORS proxy for local development
-- **Fallback Support**: User-configurable proxy options for different hosting environments
-- **Environment Variables**: `VITE_COMFYUI_PROXY=netlify` enables centralized proxy routing
+### **Network Configuration**
+- **Automatic CORS Handling**: Built-in proxy support for Netlify deployments
+- **Local Development**: Direct connection with optional custom CORS proxy
+- **Production Ready**: Zero-configuration deployment on Netlify
+- **Flexible Hosting**: Compatible with various hosting providers
 
 ### **Smart Generation**
 - **Parallel Processing**: Distribute jobs across multiple GPUs
@@ -161,13 +194,28 @@ Fine-tune generation settings:
 
 ## 🤝 Contributing
 
-We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) for:
+We welcome contributions! To get started:
+
+### **Local Development**
+```bash
+# Clone the repository
+git clone https://github.com/c3-examples/c3-examples.git
+cd c3-examples/web/004-c3-media-generator
+
+# Start development
+./start.sh
+# or manually:
+npm install && npm run dev
+```
+
+### **Areas for Contribution**
 - **New workflow templates** for different generation types
 - **Enhanced prompt engineering** features
 - **Additional CSV processing** capabilities
-- **UI/UX improvements** and dark theme enhancements
+- **UI/UX improvements** and accessibility enhancements
+- **Documentation** and examples
 
-**Repository**: [https://github.com/c3-examples/](https://github.com/c3-examples/)
+**Repository**: [https://github.com/c3-examples/c3-examples](https://github.com/c3-examples/c3-examples)
 
 ## 📊 Example Workflows
 

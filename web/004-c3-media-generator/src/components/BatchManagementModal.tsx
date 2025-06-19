@@ -65,13 +65,6 @@ function JobDetailsModal({ isOpen, onClose, job, result, params, cachedPrompts }
   const shouldUseStoredPrompts = job.workloadId === 'cached' && cachedPrompts
   let promptData
   
-  // Debug logging
-  console.log('🔍 JobDetailsModal debug:', {
-    shouldUseStoredPrompts,
-    cachedPrompts,
-    jobWorkloadId: job.workloadId
-  })
-  
   if (shouldUseStoredPrompts) {
     // Use the stored prompts from the cached image
     promptData = {
@@ -313,14 +306,6 @@ export default function BatchManagementModal({ isOpen, onClose, onViewBatch }: B
   
   // Convert CachedImage to GenerationJob and GenerationResult
   const convertToJobDetails = (image: CachedImage): {job: GenerationJob, result: GenerationResult, params: GenerationParams, cachedPrompts: any} => {
-    // Debug logging
-    console.log('🔍 Converting cached image to job details:', {
-      cardName: image.cardName,
-      prompts: image.prompts,
-      hasOriginalCard: !!image.originalCard,
-      hasJobTiming: !!image.jobTiming
-    })
-    
     // Use original card data if available, fallback to reconstructed data for older cached images
     const cardData: CardData = image.originalCard || {
       uuid: image.id,

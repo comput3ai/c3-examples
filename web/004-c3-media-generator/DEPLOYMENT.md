@@ -1,254 +1,133 @@
-# 🚀 Deployment Guide - AI Card Generator v1.0
+# AI Media Studio - Deployment Guide
 
-## 📋 Pre-Deployment Checklist
+## 🚀 Local Development
 
-### ✅ Code Quality
-- [x] All TypeScript types properly defined
-- [x] Production build successful (`npm run build`)
-- [x] No critical linting errors
-- [x] All core features tested and working
+### Quick Start
+```bash
+# Navigate to the app directory
+cd web/004-c3-media-generator
 
-### ✅ Documentation
-- [x] README.md updated for v1.0
-- [x] Contributing guidelines created
-- [x] License file added (MIT)
-- [x] Development archive organized
+# Run the startup script
+./start.sh
 
-### ✅ Configuration
-- [x] Package.json updated to v1.0.0
-- [x] Netlify configuration (`netlify.toml`)
-- [x] GitHub Actions CI/CD pipeline
-- [x] Environment variables documented
+# OR manually
+npm install
+npm run dev
+```
 
-## 🌐 Netlify Deployment
+### Environment Configuration
+Copy `.env.example` to `.env` and customize if needed:
 
-### Automatic Deployment (Recommended)
+```bash
+# Development Mode (forces dev mode even on non-localhost)
+VITE_FORCE_DEV_MODE=false
 
-1. **Connect Repository**
+# Custom CORS Proxy (for development only)
+VITE_CORS_PROXY=
+
+# Example: Use a custom CORS proxy
+# VITE_CORS_PROXY=https://your-cors-proxy.com
+```
+
+## 🌐 Production Deployment
+
+### Netlify (Recommended)
+
+The app is optimized for Netlify deployment with automatic CORS proxy handling.
+
+**Setup:**
+1. Fork the repository
+2. Connect to Netlify
+3. Configure build settings:
+   - **Base directory**: `web`
+   - **Build command**: `npm run build-all`
+   - **Publish directory**: `dist`
+
+**Features:**
+- ✅ Automatic CORS proxy for ComfyUI instances
+- ✅ Zero configuration required
+- ✅ Environment variable management
+- ✅ Custom redirects for SPA routing
+
+### Other Hosting Providers
+
+For deployment on other platforms:
+
+1. **Build the app:**
    ```bash
-   # Push to your repository
-   git add .
-   git commit -m "feat: v1.0.0 release preparation"
-   git push origin main
+   npm run build
    ```
 
-2. **Netlify Setup**
-   - Go to [netlify.com](https://netlify.com)
-   - Click "Add new site" → "Import an existing project"
-   - Connect your GitHub repository
-   - Netlify will auto-detect build settings from `netlify.toml`
+2. **Configure CORS handling:**
+   - Set up a CORS proxy service
+   - Configure `VITE_CORS_PROXY` environment variable
+   - Or ensure your hosting platform supports custom redirects
 
-3. **Build Configuration**
-   - Build command: `npm run build` (auto-detected)
-   - Publish directory: `dist` (auto-detected)
-   - Node version: 18 (set in netlify.toml)
+3. **SPA Routing:**
+   Configure your hosting to redirect all routes to `index.html`
 
-### Manual Deployment
+## 🔧 Configuration Details
 
-```bash
-# Build the project
-npm run build
+### Network Handling
 
-# Install Netlify CLI
-npm install -g netlify-cli
+The app automatically detects the deployment environment:
 
-# Deploy to Netlify
-netlify deploy --prod --dir=dist
+- **Development**: Direct connection to APIs (localhost/127.0.0.1)
+- **Production**: Uses appropriate proxy configuration
+
+### CORS Proxy Routes (Netlify)
+
+The following routes are automatically configured in `netlify.toml`:
+
+```toml
+# ComfyUI proxy with HTTPS support
+/api/comfyui/https/* → https://*
+
+# General ComfyUI proxy
+/api/comfyui/* → *
+
+# C3 API proxy
+/api/comput3/* → https://api.comput3.ai/api/v0/*
 ```
 
-## 🔧 Environment Variables
+### Security Headers
 
-### For Local Development
-
-```bash
-# .env (optional)
-VITE_CORS_PROXY=http://localhost:8080
-```
-
-### For Production
-
-No environment variables are required for production deployment. All configuration is handled client-side.
-
-## 🛡️ Security Considerations
-
-### Headers Configuration
-
-The `netlify.toml` includes security headers:
-
-- `X-Frame-Options: DENY` - Prevents clickjacking
-- `X-XSS-Protection: 1; mode=block` - XSS protection
-- `X-Content-Type-Options: nosniff` - MIME type sniffing protection
-- `Referrer-Policy: strict-origin-when-cross-origin` - Referrer protection
-
-### HTTPS
-
-- Netlify provides automatic HTTPS
-- All API calls to C3 cluster use HTTPS
-- Browser storage (IndexedDB, localStorage) is secure
-
-### API Keys
-
-- User API keys are stored locally in browser
-- No server-side storage of credentials
-- Keys are only sent directly to C3 API endpoints
-
-## 📊 Performance Optimizations
-
-### Build Optimizations
-
-- **Code splitting**: Vite automatically splits chunks
-- **Tree shaking**: Unused code is eliminated
-- **Minification**: Production builds are minified
-- **Asset optimization**: Images and assets are optimized
-
-### Runtime Optimizations
-
-- **Lazy loading**: Components load on demand
-- **Image caching**: IndexedDB for local storage
-- **State management**: Zustand for minimal re-renders
-- **Bundle size**: ~140KB gzipped total
-
-### CDN & Caching
-
-Netlify provides:
-- Global CDN distribution
-- Automatic asset caching
-- Gzip compression
-- HTTP/2 support
-
-## 🔍 Monitoring & Analytics
-
-### Build Monitoring
-
-GitHub Actions will run on every push:
-- TypeScript type checking
-- Linting validation
-- Build success verification
-- Multi-node version testing
-
-### Performance Monitoring
-
-Consider adding:
-- Google Analytics for usage tracking
-- Sentry for error monitoring
-- Web Vitals for performance metrics
+Production deployments include security headers:
+- X-Frame-Options: DENY
+- X-XSS-Protection: 1; mode=block
+- X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin
 
 ## 🐛 Troubleshooting
 
-### Common Build Issues
+### Common Issues
 
-**TypeScript Errors**
+1. **CORS errors in development:**
+   - Configure a custom CORS proxy in `.env`
+   - Use the setup UI to configure proxy settings
+
+2. **API connection failures:**
+   - Verify your C3 API key is correct
+   - Check network connectivity
+   - Ensure ComfyUI instances are accessible
+
+3. **Build failures:**
+   - Run `npm run type-check` to verify TypeScript
+   - Ensure all dependencies are installed
+   - Check Node.js version (requires 18+)
+
+### Debug Mode
+
+Enable additional logging by setting:
 ```bash
-# Run type check
-npm run type-check
-
-# Fix any type issues before deploying
+VITE_FORCE_DEV_MODE=true
 ```
 
-**Vite Build Failures**
-```bash
-# Clear cache and rebuild
-rm -rf node_modules dist
-npm install
-npm run build
-```
+This forces development mode even in production environments for debugging.
 
-**Missing Dependencies**
-```bash
-# Ensure all dependencies are installed
-npm ci
-```
+## 📋 Version Information
 
-### Common Runtime Issues
-
-**CORS Errors in Development**
-- Use the provided CORS proxy
-- Or run a local development server
-
-**API Authentication Failures**
-- Verify C3 API key is correct
-- Check wallet connection status
-- Ensure sufficient C3 credits
-
-**Storage Issues**
-- Clear browser storage if corrupted
-- Check IndexedDB permissions
-- Verify localStorage availability
-
-## 📈 Post-Deployment Steps
-
-### 1. Domain Configuration
-
-```bash
-# Custom domain (optional)
-netlify domains:add yourdomain.com
-```
-
-### 2. Analytics Setup
-
-Add tracking code to `index.html` if desired:
-
-```html
-<!-- Google Analytics example -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script>
-```
-
-### 3. Status Page
-
-Consider setting up a status page for:
-- C3 API availability
-- Generation queue status
-- System maintenance notices
-
-### 4. Community Setup
-
-- Enable GitHub Discussions
-- Set up Discord server (optional)
-- Configure issue templates
-
-## 🚀 Go Live!
-
-### Final Verification
-
-Before announcing v1.0:
-
-1. **Test Complete Workflow**
-   - [ ] CSV upload and processing
-   - [ ] Template configuration
-   - [ ] Generation jobs
-   - [ ] Image downloads
-   - [ ] Generation history
-
-2. **Cross-Browser Testing**
-   - [ ] Chrome (latest)
-   - [ ] Firefox (latest)
-   - [ ] Safari (latest)
-   - [ ] Edge (latest)
-
-3. **Mobile Testing**
-   - [ ] iOS Safari
-   - [ ] Android Chrome
-   - [ ] Responsive design
-
-### Launch Announcement
-
-Ready to announce v1.0? Consider:
-
-- GitHub release with changelog
-- Social media announcement
-- Documentation updates
-- Community notifications
-
----
-
-**🎉 Congratulations on AI Card Generator v1.0! 🎮**
-
-The platform is production-ready with:
-- ✅ Full template transparency
-- ✅ Video generation support
-- ✅ Universal CSV compatibility
-- ✅ Real-time generation tracking
-- ✅ Persistent browser storage
-- ✅ Complete user control
-
-**[Deploy Now](https://netlify.com)** and start creating amazing AI cards! 
+- **Node.js**: 18.0.0 or higher
+- **npm**: 8.0.0 or higher
+- **Build Target**: ES2020
+- **Framework**: React 18 + TypeScript + Vite 

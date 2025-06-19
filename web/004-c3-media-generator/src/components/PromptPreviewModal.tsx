@@ -55,9 +55,6 @@ export default function PromptPreviewModal({
     // Get templates from the centralized template store
     const currentTemplates = getEffectiveTemplates()
     
-    console.log('🔍 Preview Modal - Using templates:', currentTemplates)
-    console.log('🔍 Preview Modal - Using conditional enhancements:', conditionalEnhancements)
-    
     return cards.map((card, index) => {
       const edited = editedPrompts[index]
       
@@ -75,12 +72,6 @@ export default function PromptPreviewModal({
       
       // Use the centralized prompt builder with conditional enhancements
       const promptData = createPromptForCard(card, params, currentTemplates, conditionalEnhancements)
-      
-      console.log(`🎯 Generated preview for ${card.name}:`, {
-        positive: promptData.positive.slice(0, 100) + '...',
-        negative: promptData.negative.slice(0, 50) + '...',
-        hasEnhancements: Object.keys(conditionalEnhancements).length > 0
-      })
       
       return {
         ...card,
