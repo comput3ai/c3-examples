@@ -48,7 +48,7 @@ Example `.env` content:
 ```env
 # CORS proxy for local development (optional)
 # Only needed if you encounter CORS errors with api.comput3.ai
-# See 101-CORS-Proxy/README.md for setup instructions
+# See utils/cors-proxy/README.md for setup instructions
 VITE_CORS_PROXY=http://localhost:8080
 
 # Comput3 API endpoints (optional - defaults are usually fine)
@@ -57,7 +57,7 @@ VITE_API_URL=https://api.comput3.ai/api/v0
 ```
 
 Environment variables:
-- `VITE_CORS_PROXY`: CORS proxy for local development (only set if needed - see [CORS Proxy Guide](101-CORS-Proxy/README.md))
+- `VITE_CORS_PROXY`: CORS proxy for local development (only set if needed - see [CORS Proxy Guide](../utils/cors-proxy/README.md))
 - `VITE_LB_URL`: Comput3 load balancer URL (has open CORS, proxy not needed)
 - `VITE_API_URL`: Comput3 API base URL (may need CORS proxy in development)
 
@@ -71,10 +71,10 @@ Environment variables:
 
 If you encounter CORS errors during local development, you can use the included CORS proxy:
 
-1. **Setup the proxy**: See [101-CORS-Proxy/README.md](101-CORS-Proxy/README.md) for detailed instructions
+1. **Setup the proxy**: See [utils/cors-proxy/README.md](../utils/cors-proxy/README.md) for detailed instructions
 2. **Quick start**:
    ```bash
-   cd web/101-CORS-Proxy
+   cd utils/cors-proxy
    npm install
    npm start  # or: node server.js
    ```

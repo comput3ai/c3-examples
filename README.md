@@ -13,11 +13,20 @@ Contains Python scripts that demonstrate how to interact with Comput3's API for 
 
 [View Scripts Documentation →](./scripts/README.md)
 
-### `/web` - Web Application Examples (Coming Soon)
-Will contain examples of web applications built with Comput3's services:
-- Landing pages with AI-powered features
-- Interactive demos
-- Full-stack applications integrating Comput3 APIs
+### `/web` - Web Application Examples
+Interactive web applications showcasing Comput3's AI capabilities:
+- **Landing pages** with AI-powered features
+- **Interactive demos** and generators
+- **Full-stack applications** integrating Comput3 APIs
+
+[View Web Examples Documentation →](./web/README.md)
+
+### `/utils` - Development Utilities
+Tools and utilities to support development and deployment:
+- **CORS Proxy**: For local development when encountering CORS issues
+- **Build Tools**: Scripts and utilities for development workflow
+
+[View Utils Documentation →](./utils/README.md)
 
 ## 🚀 Getting Started
 
