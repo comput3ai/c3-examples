@@ -64,8 +64,24 @@ export class ComfyUIClient {
       return `${customCorsProxy}/${fullUrl}`
     }
     
-    // In production on examples.comput3.ai, connect directly to ComfyUI nodes
-    // The CORS should be handled properly by the ComfyUI instances
+    if (isProduction) {
+      // In production, use CORS proxy server to handle ComfyUI CORS issues
+      // Extract the node URL from the baseUrl (e.g., https://ui-truly-sadly-close-gpu.comput3.ai)
+      const nodeUrl = this.baseUrl.replace(/^https?:\/\//, '')
+      
+      // Use configurable CORS proxy server, or fallback to Netlify redirects
+      const externalProxy = import.meta.env.VITE_COMFYUI_PROXY
+      
+      if (externalProxy && externalProxy !== 'netlify') {
+        // Use external proxy server
+        return `${externalProxy}/comfyui/${nodeUrl}${endpoint}`
+      } else {
+        // Use Netlify redirects as fallback
+        return `/api/comfyui-proxy/${nodeUrl}${endpoint}`
+      }
+    }
+    
+    // In development without proxy, connect directly (will only work with local ComfyUI or proper CORS setup)
     return fullUrl
   }
 

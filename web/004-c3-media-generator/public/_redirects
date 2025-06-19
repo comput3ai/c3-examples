@@ -1,0 +1,15 @@
+# ComfyUI CORS Proxy using Netlify redirects
+# This proxies ComfyUI requests to avoid CORS issues
+
+# Proxy ComfyUI queue endpoint
+/api/comfyui-proxy/:nodeurl/queue https://:nodeurl/queue 200
+/api/comfyui-proxy/:nodeurl/prompt https://:nodeurl/prompt 200
+/api/comfyui-proxy/:nodeurl/history/:promptid https://:nodeurl/history/:promptid 200
+/api/comfyui-proxy/:nodeurl/api/view https://:nodeurl/api/view 200
+/api/comfyui-proxy/:nodeurl/api/viewvideo https://:nodeurl/api/viewvideo 200
+
+# Catch-all for other ComfyUI endpoints
+/api/comfyui-proxy/:nodeurl/* https://:nodeurl/:splat 200
+
+# SPA fallback for the main app
+/* /004-c3-media-generator/index.html 200 
