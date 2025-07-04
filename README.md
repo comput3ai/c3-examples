@@ -16,6 +16,7 @@ Contains Python scripts that demonstrate how to interact with Comput3's API for 
 ### `/web` - Web Application Examples
 Check out hosted web examples NOW ! 
 https://examples.comput3.ai 
+
 Interactive web applications showcasing Comput3's AI capabilities:
 - **Landing pages** with AI-powered features
 - **Interactive demos** and generators
