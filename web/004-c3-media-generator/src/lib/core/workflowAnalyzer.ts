@@ -332,18 +332,74 @@ export class WorkflowAnalyzer {
 
   private analyzeModelLoaderNode(node: any, configurableParams: ConfigurableParameter[]): void {
     const nodeId = String(node.id)
+    const nodeType = node.type
     const widgets = node.widgets_values || []
     
-    if (widgets.length > 0) {
-      configurableParams.push({
-        nodeId,
-        inputName: 'model_name',
-        paramType: 'model',
-        displayName: 'Model',
-        currentValue: widgets[0],
-        valueType: 'string',
-        isRequired: true
-      })
+    if (nodeType === 'UNETLoader') {
+      // Handle UNETLoader specifically
+      if (widgets.length > 0) {
+        // First parameter: unet_name (model selection)
+        const currentModel = widgets[0]
+        const isHiDreamModel = currentModel && currentModel.includes('HiDream/')
+        
+        configurableParams.push({
+          nodeId,
+          inputName: 'unet_name',
+          paramType: 'model',
+          displayName: 'UNET Model',
+          description: 'Select the diffusion model to use for generation',
+          currentValue: currentModel,
+          valueType: 'enum',
+          enumOptions: isHiDreamModel ? [
+            'HiDream/hidream_i1_dev_fp8.safetensors',
+            'HiDream/hidream_i1_fast_fp8.safetensors',
+            'HiDream/hidream_i1_full_fp8.safetensors'
+          ] : [currentModel], // Fallback to current value if not HiDream
+          isRequired: true
+        })
+      }
+      
+      if (widgets.length > 1) {
+        // Second parameter: weight_dtype
+        configurableParams.push({
+          nodeId,
+          inputName: 'weight_dtype',
+          paramType: 'other',
+          displayName: 'Weight Data Type',
+          description: 'Data type for model weights',
+          currentValue: widgets[1],
+          valueType: 'enum',
+          enumOptions: ['default', 'fp8_e4m3fn', 'fp8_e5m2', 'fp16', 'bf16'],
+          isRequired: false
+        })
+      }
+    } else if (nodeType === 'CheckpointLoaderSimple') {
+      // Handle CheckpointLoaderSimple
+      if (widgets.length > 0) {
+        configurableParams.push({
+          nodeId,
+          inputName: 'ckpt_name',
+          paramType: 'model',
+          displayName: 'Checkpoint',
+          description: 'Select the checkpoint model to load',
+          currentValue: widgets[0],
+          valueType: 'string', // Could be enum if we knew the available checkpoints
+          isRequired: true
+        })
+      }
+    } else {
+      // Fallback for other model loader types
+      if (widgets.length > 0) {
+        configurableParams.push({
+          nodeId,
+          inputName: 'model_name',
+          paramType: 'model',
+          displayName: 'Model',
+          currentValue: widgets[0],
+          valueType: 'string',
+          isRequired: true
+        })
+      }
     }
   }
 
@@ -733,6 +789,12 @@ export class WorkflowAnalyzer {
   ): any {
     const updatedWorkflow = JSON.parse(JSON.stringify(workflowData))
     
+    console.log(`🔧 Applying ${Object.keys(parameterUpdates).length} parameter updates to workflow:`)
+    console.log(parameterUpdates)
+    
+    let appliedCount = 0
+    let skippedCount = 0
+    
     for (const node of updatedWorkflow.nodes) {
       const nodeId = String(node.id)
       
@@ -740,34 +802,388 @@ export class WorkflowAnalyzer {
       for (const [paramKey, newValue] of Object.entries(parameterUpdates)) {
         if (paramKey.startsWith(`${nodeId}.`)) {
           const inputName = paramKey.split('.')[1]
-          this.updateNodeParameter(node, inputName, newValue)
+          const originalValue = this.getNodeParameterValue(node, inputName)
+          
+          console.log(`📝 Updating ${paramKey}: ${originalValue} → ${newValue}`)
+          const success = this.updateNodeParameter(node, inputName, newValue)
+          
+          if (success) {
+            appliedCount++
+          } else {
+            skippedCount++
+          }
         }
       }
     }
     
+    console.log(`✅ Applied ${appliedCount} parameters, skipped ${skippedCount} parameters`)
+    
     return updatedWorkflow
   }
 
-  private updateNodeParameter(node: any, inputName: string, newValue: any): void {
-    // Handle different input types
+  private updateNodeParameter(node: any, inputName: string, newValue: any): boolean {
+    // Handle different input types based on node analysis
+    const nodeType = node.type || node.class_type
+    
+    // For prompt/text parameters
     if (inputName === 'text' && node.widgets_values) {
       node.widgets_values[0] = newValue
-    } else if (inputName === 'width' && node.widgets_values) {
-      node.widgets_values[0] = newValue
-    } else if (inputName === 'height' && node.widgets_values) {
-      node.widgets_values[1] = newValue
-    } else if (inputName === 'seed' && node.widgets_values) {
-      node.widgets_values[0] = newValue
-    } else if (inputName === 'steps' && node.widgets_values) {
-      node.widgets_values[2] = newValue
-    } else if (inputName === 'cfg' && node.widgets_values) {
-      node.widgets_values[3] = newValue
-    } else if (inputName.startsWith('widget_') && node.widgets_values) {
+      return true
+    }
+    
+    // Handle parameters based on node type and input name
+    if (nodeType === 'KSampler' && node.widgets_values) {
+      const ksamplerMap: Record<string, number> = {
+        'seed': 0,
+        'control': 1,
+        'steps': 2,
+        'cfg': 3,
+        'sampler_name': 4,
+        'scheduler': 5,
+        'denoise': 6
+      }
+      
+      if (inputName in ksamplerMap) {
+        node.widgets_values[ksamplerMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'SONICSampler' && node.widgets_values) {
+      const sonicSamplerMap: Record<string, number> = {
+        'seed': 0,
+        'steps': 1,
+        'cfg': 2,
+        'sampler_name': 3,
+        'scheduler': 4,
+        'denoise': 5
+      }
+      
+      if (inputName in sonicSamplerMap) {
+        node.widgets_values[sonicSamplerMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if ((nodeType === 'EmptyLatentImage' || nodeType === 'EmptySD3LatentImage') && node.widgets_values) {
+      const latentMap: Record<string, number> = {
+        'width': 0,
+        'height': 1,
+        'batch_size': 2
+      }
+      
+      if (inputName in latentMap) {
+        node.widgets_values[latentMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'SaveImage' && node.widgets_values) {
+      if (inputName === 'filename_prefix') {
+        node.widgets_values[0] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'VAELoader' && node.widgets_values) {
+      if (inputName === 'vae_name') {
+        node.widgets_values[0] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'UNETLoader' && node.widgets_values) {
+      const unetMap: Record<string, number> = {
+        'unet_name': 0,
+        'weight_dtype': 1
+      }
+      
+      if (inputName in unetMap) {
+        node.widgets_values[unetMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'QuadrupleCLIPLoader' && node.widgets_values) {
+      const clipMap: Record<string, number> = {
+        'clip_name1': 0,
+        'clip_name2': 1,
+        'clip_name3': 2,
+        'clip_name4': 3
+      }
+      
+      if (inputName in clipMap) {
+        node.widgets_values[clipMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'ModelSamplingSD3' && node.widgets_values) {
+      if (inputName === 'shift') {
+        node.widgets_values[0] = newValue
+        return true
+      }
+    }
+    
+    // Video workflow node types
+    if (nodeType === 'WanVideoTextEncode' && node.widgets_values) {
+      const videoTextMap: Record<string, number> = {
+        'positive_prompt': 0,
+        'negative_prompt': 1,
+        'enable_text_conditioning': 2
+      }
+      
+      if (inputName in videoTextMap) {
+        node.widgets_values[videoTextMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoSampler' && node.widgets_values) {
+      const videoSamplerMap: Record<string, number> = {
+        'steps': 0,
+        'cfg': 1,
+        'shift': 2,
+        'seed': 3,
+        'sampler_name': 4,
+        'force_offload': 5,
+        'scheduler': 6,
+        'riflex_freq_index': 7
+      }
+      
+      if (inputName in videoSamplerMap) {
+        node.widgets_values[videoSamplerMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoEmptyEmbeds' && node.widgets_values) {
+      const videoEmbedsMap: Record<string, number> = {
+        'width': 0,
+        'height': 1,
+        'num_frames': 2
+      }
+      
+      if (inputName in videoEmbedsMap) {
+        node.widgets_values[videoEmbedsMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoModelLoader' && node.widgets_values) {
+      const videoModelMap: Record<string, number> = {
+        'model': 0,
+        'base_precision': 1,
+        'quantization': 2,
+        'load_device': 3
+      }
+      
+      if (inputName in videoModelMap) {
+        node.widgets_values[videoModelMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoVAELoader' && node.widgets_values) {
+      const videoVAEMap: Record<string, number> = {
+        'model_name': 0,
+        'precision': 1
+      }
+      
+      if (inputName in videoVAEMap) {
+        node.widgets_values[videoVAEMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'LoadWanVideoT5TextEncoder' && node.widgets_values) {
+      const videoT5Map: Record<string, number> = {
+        'model_name': 0,
+        'precision': 1
+      }
+      
+      if (inputName in videoT5Map) {
+        node.widgets_values[videoT5Map[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoDecode' && node.widgets_values) {
+      const videoDecodeMap: Record<string, number> = {
+        'enable_vae_tiling': 0,
+        'tile_x': 1,
+        'tile_y': 2,
+        'tile_stride_x': 3,
+        'tile_stride_y': 4
+      }
+      
+      if (inputName in videoDecodeMap) {
+        node.widgets_values[videoDecodeMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoTorchCompileSettings' && node.widgets_values) {
+      const torchCompileMap: Record<string, number> = {
+        'mode': 0,
+        'backend': 1,
+        'dynamic': 2,
+        'fullgraph': 3,
+        'compile_transformer_blocks_only': 4,
+        'dynamo_cache_size_limit': 5
+      }
+      
+      if (inputName in torchCompileMap) {
+        node.widgets_values[torchCompileMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoBlockSwap' && node.widgets_values) {
+      const blockSwapMap: Record<string, number> = {
+        'blocks_to_swap': 0,
+        'offload_txt_emb': 1,
+        'offload_img_emb': 2,
+        'batch_offload': 3,
+        'blocks_to_keep': 4
+      }
+      
+      if (inputName in blockSwapMap) {
+        node.widgets_values[blockSwapMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoTeaCache' && node.widgets_values) {
+      const teaCacheMap: Record<string, number> = {
+        'rel_l1_thresh': 0,
+        'start_step': 1,
+        'end_step': 2,
+        'cache_device': 3,
+        'use_coefficients': 4,
+        'coefficient_type': 5
+      }
+      
+      if (inputName in teaCacheMap) {
+        node.widgets_values[teaCacheMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'WanVideoEnhanceAVideo' && node.widgets_values) {
+      const enhanceVideoMap: Record<string, number> = {
+        'weight': 0,
+        'start_percent': 1,
+        'end_percent': 2
+      }
+      
+      if (inputName in enhanceVideoMap) {
+        node.widgets_values[enhanceVideoMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    if (nodeType === 'VHS_VideoCombine' && node.widgets_values) {
+      // Handle object format for VHS_VideoCombine
+      if (typeof node.widgets_values === 'object' && !Array.isArray(node.widgets_values)) {
+        node.widgets_values[inputName] = newValue
+        return true
+      }
+      
+      // Handle array format as fallback
+      const videoCombineMap: Record<string, number> = {
+        'frame_rate': 0,
+        'loop_count': 1,
+        'filename_prefix': 2,
+        'format': 3,
+        'pingpong': 4,
+        'save_output': 5
+      }
+      
+      if (inputName in videoCombineMap && Array.isArray(node.widgets_values)) {
+        node.widgets_values[videoCombineMap[inputName]] = newValue
+        return true
+      }
+    }
+    
+    // Generic widget index fallback (for widget_0, widget_1, etc.)
+    if (inputName.startsWith('widget_') && node.widgets_values) {
       const index = parseInt(inputName.replace('widget_', ''))
       if (!isNaN(index) && index < node.widgets_values.length) {
         node.widgets_values[index] = newValue
+        return true
       }
     }
+    
+    // If no specific mapping found, try to find the parameter in the node's widget values by position
+    // This is a fallback for unmapped parameters
+    console.warn(`⚠️ No parameter mapping found for ${nodeType}.${inputName}, value not applied`)
+    return false
+  }
+
+  private getNodeParameterValue(node: any, inputName: string): any {
+    const nodeType = node.type || node.class_type
+    
+    // For prompt/text parameters
+    if (inputName === 'text' && node.widgets_values) {
+      return node.widgets_values[0]
+    }
+    
+    // Handle parameters based on node type and input name
+    if (nodeType === 'KSampler' && node.widgets_values) {
+      const ksamplerMap: Record<string, number> = {
+        'seed': 0,
+        'control': 1,
+        'steps': 2,
+        'cfg': 3,
+        'sampler_name': 4,
+        'scheduler': 5,
+        'denoise': 6
+      }
+      
+      if (inputName in ksamplerMap) {
+        return node.widgets_values[ksamplerMap[inputName]]
+      }
+    }
+    
+    if (nodeType === 'SONICSampler' && node.widgets_values) {
+      const sonicSamplerMap: Record<string, number> = {
+        'seed': 0,
+        'steps': 1,
+        'cfg': 2,
+        'sampler_name': 3,
+        'scheduler': 4,
+        'denoise': 5
+      }
+      
+      if (inputName in sonicSamplerMap) {
+        return node.widgets_values[sonicSamplerMap[inputName]]
+      }
+    }
+    
+    if ((nodeType === 'EmptyLatentImage' || nodeType === 'EmptySD3LatentImage') && node.widgets_values) {
+      const latentMap: Record<string, number> = {
+        'width': 0,
+        'height': 1,
+        'batch_size': 2
+      }
+      
+      if (inputName in latentMap) {
+        return node.widgets_values[latentMap[inputName]]
+      }
+    }
+    
+    // Add more mappings as needed for other node types...
+    
+    // Generic widget index fallback
+    if (inputName.startsWith('widget_') && node.widgets_values) {
+      const index = parseInt(inputName.replace('widget_', ''))
+      if (!isNaN(index) && index < node.widgets_values.length) {
+        return node.widgets_values[index]
+      }
+    }
+    
+    return undefined
   }
 
   // Enhanced analysis for WanVideo text encoding nodes

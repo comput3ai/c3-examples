@@ -49,7 +49,8 @@ export default function WorkflowManagerModal({ isOpen, onClose, onWorkflowReady 
         '82.steps': 35,           // KSampler steps
         '82.cfg': 5,              // KSampler CFG
         '87.width': 1024,         // EmptySD3LatentImage width
-        '87.height': 1024         // EmptySD3LatentImage height
+        '87.height': 1024,        // EmptySD3LatentImage height
+        '69.unet_name': 'HiDream/hidream_i1_dev_fp8.safetensors'  // UNETLoader model
       }
     },
     {
