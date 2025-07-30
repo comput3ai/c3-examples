@@ -31,7 +31,10 @@ export class Comput3Client {
     }
     
     const environment = isProduction ? 'production' : 'development'
-    const proxyInfo = customCorsProxy ? `custom proxy: ${customCorsProxy}` : 
+    const localStorageCorsProxy = localStorage.getItem('CORS_PROXY')
+    const activeCorsProxy = localStorageCorsProxy || customCorsProxy
+    
+    const proxyInfo = activeCorsProxy ? `CORS proxy: ${activeCorsProxy}` : 
                      window.location.hostname.includes('examples.comput3.ai') ? 'direct API (CORS allowed)' :
                      isProduction ? 'Netlify proxy' : 'direct API (requires CORS proxy)'
     
@@ -51,13 +54,27 @@ export class Comput3Client {
     const fullUrl = `${this.baseUrl}${endpoint}`
     
     // Check for custom CORS proxy in development
-    const customCorsProxy = import.meta.env.VITE_CORS_PROXY
+    const envCorsProxy = import.meta.env.VITE_CORS_PROXY
+    const localStorageCorsProxy = localStorage.getItem('CORS_PROXY')
     const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
     const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
     
-    if (!isProduction && customCorsProxy) {
-      // In development with custom CORS proxy, prefix the full URL with the proxy
-      return `${customCorsProxy}/${fullUrl}`
+    // Prefer localStorage proxy (user-configured) over environment variable
+    const corsProxy = localStorageCorsProxy || envCorsProxy
+    
+    if (!isProduction && corsProxy) {
+      // Format the CORS proxy URL properly
+      let proxyUrl = corsProxy.trim()
+      
+      // Add http:// if no protocol is specified
+      if (!proxyUrl.startsWith('http://') && !proxyUrl.startsWith('https://')) {
+        proxyUrl = `http://${proxyUrl}`
+      }
+      
+      // For CORS Anywhere style proxies, append the target URL
+      const proxiedUrl = `${proxyUrl}/${fullUrl}`
+      console.log(`🔗 Using CORS proxy: ${proxyUrl} for ${fullUrl} → ${proxiedUrl}`)
+      return proxiedUrl
     }
     
     return fullUrl
@@ -65,10 +82,27 @@ export class Comput3Client {
 
   private async makeRequest(endpoint: string, method: string = 'POST', body?: any): Promise<Response> {
     const url = this.buildUrl(endpoint)
+    const headers = this.getHeaders()
+    
+    // Check if we're using a CORS proxy in development
+    const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
+    const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
+    const localStorageCorsProxy = localStorage.getItem('CORS_PROXY')
+    const usingCorsProxy = !isProduction && localStorageCorsProxy
+    
+    if (usingCorsProxy) {
+      // When using CORS proxy, set headers to match the working production setup
+      headers['Origin'] = 'https://examples.comput3.ai'
+      headers['Referer'] = 'https://examples.comput3.ai/'
+      // Remove headers that might cause issues with proxying
+      delete headers['Sec-Fetch-Site']
+      delete headers['Sec-Fetch-Mode']
+      delete headers['Sec-Fetch-Dest']
+    }
     
     const options: RequestInit = {
       method: method,
-      headers: this.getHeaders(),
+      headers: headers,
       mode: 'cors'
     }
 
@@ -77,6 +111,9 @@ export class Comput3Client {
     }
 
     console.log(`🌐 C3 API request: ${method} ${url}`)
+    if (usingCorsProxy) {
+      console.log(`🔧 Using CORS proxy with spoofed origin: https://examples.comput3.ai`)
+    }
 
     try {
       const response = await fetch(url, options)

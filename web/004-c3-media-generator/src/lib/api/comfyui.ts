@@ -1,6 +1,14 @@
 import type { ComfyUIPrompt, JobStatus } from '../../types/index'
 import type { PromptData } from '../core/promptBuilder'
 
+// Extend the ImportMetaEnv interface to include our custom environment variables
+declare global {
+  interface ImportMetaEnv {
+    readonly VITE_FORCE_DEV_MODE?: string
+    readonly VITE_CORS_PROXY?: string
+  }
+}
+
 interface WorkflowValidation {
   valid: boolean
   errors: string[]
@@ -55,7 +63,8 @@ export class ComfyUIClient {
     const fullUrl = `${this.baseUrl}${endpoint}`
     
     // Check for custom CORS proxy in development
-    const customCorsProxy = import.meta.env.VITE_CORS_PROXY
+    const envCorsProxy = import.meta.env.VITE_CORS_PROXY
+    const localStorageCorsProxy = localStorage.getItem('CORS_PROXY')
     const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
     const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
     
@@ -70,9 +79,20 @@ export class ComfyUIClient {
       localStorage.removeItem('CORS_PROXY')
     }
     
-    if (!isProduction && customCorsProxy) {
-      // In development with custom CORS proxy, prefix the full URL with the proxy
-      return `${customCorsProxy}/${fullUrl}`
+    // Prefer localStorage proxy (user-configured) over environment variable
+    const corsProxy = localStorageCorsProxy || envCorsProxy
+    
+    if (!isProduction && corsProxy) {
+      // Format the CORS proxy URL properly for development
+      let proxyUrl = corsProxy.trim()
+      
+      // Add http:// if no protocol is specified
+      if (!proxyUrl.startsWith('http://') && !proxyUrl.startsWith('https://')) {
+        proxyUrl = `http://${proxyUrl}`
+      }
+      
+      console.log(`🔗 ComfyUI using CORS proxy: ${proxyUrl} for ${fullUrl}`)
+      return `${proxyUrl}/${fullUrl}`
     }
     
     if (isProduction) {
@@ -116,6 +136,12 @@ export class ComfyUIClient {
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const url = this.buildUrl(endpoint)
     
+    // Check if we're using a CORS proxy in development
+    const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
+    const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
+    const localStorageCorsProxy = localStorage.getItem('CORS_PROXY')
+    const usingCorsProxy = !isProduction && localStorageCorsProxy
+    
     // Simplified headers to avoid CORS issues
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -134,6 +160,13 @@ export class ComfyUIClient {
       headers['X-C3-API-Key'] = this.apiKey
     }
     
+    if (usingCorsProxy) {
+      // Clean up headers that might interfere with CORS proxying
+      delete headers['Sec-Fetch-Site']
+      delete headers['Sec-Fetch-Mode'] 
+      delete headers['Sec-Fetch-Dest']
+    }
+    
     const requestOptions: RequestInit = {
       ...options,
       mode: 'cors',
@@ -142,6 +175,9 @@ export class ComfyUIClient {
 
     try {
       console.log(`🌐 ComfyUI request: ${requestOptions.method || 'GET'} ${url}`)
+      if (usingCorsProxy) {
+        console.log(`🔧 ComfyUI using CORS proxy: ${localStorageCorsProxy}`)
+      }
       
       const response = await fetch(url, requestOptions)
       console.log(`📡 Response: ${response.status} ${response.statusText}`)
@@ -159,7 +195,26 @@ export class ComfyUIClient {
    */
   async loadWorkflow(workflowUrl: string): Promise<any> {
     try {
-      const response = await fetch(workflowUrl)
+      // Check if we need to use CORS proxy for external workflow URLs
+      const forceDevMode = import.meta.env.VITE_FORCE_DEV_MODE === 'true'
+      const isProduction = forceDevMode ? false : (window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1'))
+      const localStorageCorsProxy = localStorage.getItem('CORS_PROXY')
+      const isExternalUrl = workflowUrl.startsWith('http://') || workflowUrl.startsWith('https://')
+      const isCurrentDomain = workflowUrl.includes(window.location.hostname)
+      
+      let finalUrl = workflowUrl
+      
+      // Use CORS proxy for external URLs in development
+      if (!isProduction && localStorageCorsProxy && isExternalUrl && !isCurrentDomain) {
+        let proxyUrl = localStorageCorsProxy.trim()
+        if (!proxyUrl.startsWith('http://') && !proxyUrl.startsWith('https://')) {
+          proxyUrl = `http://${proxyUrl}`
+        }
+        finalUrl = `${proxyUrl}/${workflowUrl}`
+        console.log(`🔗 Loading workflow via CORS proxy: ${finalUrl}`)
+      }
+      
+      const response = await fetch(finalUrl)
       if (!response.ok) {
         throw new Error(`Failed to load workflow: ${response.status} - ${response.statusText}`)
       }
@@ -1368,10 +1423,10 @@ export class ComfyUIClient {
 
     const timeoutMs = timeoutMinutes * 60 * 1000
     const startTime = Date.now()
-    let checkInterval = 3000 // Start with 3 seconds between checks (reduced API load)
+    let checkInterval = 10000 // Start with 10 seconds between checks (reduced API load)
 
-    // Wait 3 seconds before first check to avoid immediate polling
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    // Wait 10 seconds before first check to avoid immediate polling
+    await new Promise(resolve => setTimeout(resolve, 10000))
 
     while (true) {
       // Check for timeout
@@ -1438,7 +1493,7 @@ export class ComfyUIClient {
         return false
       }
 
-      // Gradually increase interval to reduce API load (3s -> 6s -> 9s -> 12s -> 15s max)
+      // Gradually increase interval to reduce API load (10s -> 13s -> 15s max)
       checkInterval = Math.min(15000, checkInterval + 3000)
       await new Promise(resolve => setTimeout(resolve, checkInterval))
     }

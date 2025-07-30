@@ -8,6 +8,7 @@ export function SetupStep() {
   // Clean slate - no pre-filled values for production
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [corsProxy, setCorsProxy] = useState('')
+  const [customProxyUrl, setCustomProxyUrl] = useState('')
   const [isValidating, setIsValidating] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
   const [isValid, setIsValid] = useState(false)
@@ -26,8 +27,9 @@ export function SetupStep() {
 
     try {
       // Set the CORS proxy in localStorage for the ComfyUI client to use
-      if (corsProxy && corsProxy.trim()) {
-        localStorage.setItem('CORS_PROXY', corsProxy.trim())
+      const proxyUrl = corsProxy === 'custom' ? customProxyUrl.trim() : corsProxy
+      if (proxyUrl) {
+        localStorage.setItem('CORS_PROXY', proxyUrl)
       } else {
         localStorage.removeItem('CORS_PROXY')
       }
@@ -99,14 +101,8 @@ export function SetupStep() {
                       type="radio"
                       name="corsProxy"
                       value={option.value}
-                      checked={option.value === 'custom' ? !corsProxyOptions.some(opt => opt.value === corsProxy && opt.value !== 'custom') : corsProxy === option.value}
-                      onChange={(e) => {
-                        if (option.value === 'custom') {
-                          setCorsProxy('')
-                        } else {
-                          setCorsProxy(option.value)
-                        }
-                      }}
+                      checked={corsProxy === option.value}
+                      onChange={(e) => setCorsProxy(e.target.value)}
                       className="mt-1"
                     />
                     <div>
@@ -117,12 +113,12 @@ export function SetupStep() {
                 ))}
               </div>
 
-              {(!corsProxyOptions.some(opt => opt.value === corsProxy && opt.value !== 'custom')) && (
+              {corsProxy === 'custom' && (
                 <div className="mt-2">
                   <input
                     type="url"
-                    value={corsProxy}
-                    onChange={(e) => setCorsProxy(e.target.value)}
+                    value={customProxyUrl}
+                    onChange={(e) => setCustomProxyUrl(e.target.value)}
                     placeholder="https://your-cors-proxy.com"
                     className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md text-sm"
                   />
@@ -150,7 +146,7 @@ export function SetupStep() {
                 <>
                   <p className="font-medium text-blue-400 mb-1">🔧 Development Mode:</p>
                   <p className="text-blue-300 text-xs">
-                    {corsProxy ? `Using CORS proxy: ${corsProxy}` : 'Direct connection (requires CORS-enabled ComfyUI)'}
+                    {corsProxy === 'custom' ? `Using CORS proxy: ${customProxyUrl || 'Custom proxy URL not set'}` : corsProxy ? `Using CORS proxy: ${corsProxy}` : 'Direct connection (requires CORS-enabled ComfyUI)'}
                   </p>
                 </>
               )}
