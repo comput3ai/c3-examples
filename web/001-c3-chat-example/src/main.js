@@ -20,6 +20,8 @@ document.querySelector('#app').innerHTML = `
         <select id="model-select">
           <option value="llama3:70b">Llama3:70B (Free)</option>
           <option value="hermes3:70b">Hermes3:70B (Premium)</option>
+          <option value="kimi-k2">Kimi-K2</option>
+          <option value="qwen3-coder:480b">Qwen3-Coder:480B</option>
         </select>
       </div>
     </div>
