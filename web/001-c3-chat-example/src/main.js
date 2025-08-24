@@ -18,10 +18,7 @@ document.querySelector('#app').innerHTML = `
       <div class="api-key-container">
         <input type="text" id="api-key" placeholder="Enter your Comput3 API key (auto-detected from cookie if available)" />
         <select id="model-select">
-          <option value="llama3:70b">Llama3:70B (Free)</option>
-          <option value="hermes3:70b">Hermes3:70B (Premium)</option>
-          <option value="kimi-k2">Kimi-K2</option>
-          <option value="qwen3-coder:480b">Qwen3-Coder:480B</option>
+          <option value="" disabled selected>Loading models...</option>
         </select>
       </div>
     </div>
@@ -69,6 +66,65 @@ function setCookie(name, value, days = 365) {
   document.cookie = `${name}=${value};${expires};path=/;SameSite=Lax`;
 }
 
+// Function to fetch available models from the API
+async function fetchAvailableModels() {
+  try {
+    const response = await fetch('https://api.comput3.ai/v1/models');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch models: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    return [];
+  }
+}
+
+// Function to populate model dropdown
+async function populateModelDropdown() {
+  const models = await fetchAvailableModels();
+  
+  // Clear existing options
+  modelSelect.innerHTML = '';
+  
+  if (models.length === 0) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'Failed to load models';
+    option.disabled = true;
+    option.selected = true;
+    modelSelect.appendChild(option);
+    return;
+  }
+  
+  // Add models to dropdown
+  models.forEach((model, index) => {
+    const option = document.createElement('option');
+    option.value = model.id;
+    option.textContent = model.id;
+    
+    // Select first model by default
+    if (index === 0) {
+      option.selected = true;
+    }
+    
+    modelSelect.appendChild(option);
+  });
+  
+  // Load saved model preference from localStorage if available
+  const savedModel = localStorage.getItem('preferred_model');
+  if (savedModel && models.find(m => m.id === savedModel)) {
+    modelSelect.value = savedModel;
+  }
+}
+
+// Save model preference when changed
+modelSelect.addEventListener('change', () => {
+  localStorage.setItem('preferred_model', modelSelect.value);
+});
+
 // Check for API key in this order: cookie, environment variable
 const cookieApiKey = getCookie('c3_api_key');
 if (cookieApiKey) {
@@ -80,6 +136,9 @@ if (cookieApiKey) {
   apiKeyInput.type = 'password';
   apiKeyInput.placeholder = 'API key set from environment variable';
 }
+
+// Populate models on page load
+populateModelDropdown();
 
 // Keep track of conversation history for context
 let conversationHistory = [];
