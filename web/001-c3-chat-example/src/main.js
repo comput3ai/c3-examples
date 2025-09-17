@@ -69,7 +69,19 @@ function setCookie(name, value, days = 365) {
 // Function to fetch available models from the API
 async function fetchAvailableModels() {
   try {
-    const response = await fetch('https://api.comput3.ai/v1/models');
+    // Get API key from input field, cookie, or environment variable
+    const apiKey = apiKeyInput.value.trim() || getCookie('c3_api_key') || import.meta.env.VITE_C3_API_KEY;
+
+    if (!apiKey) {
+      console.warn('No API key available for fetching models');
+      return [];
+    }
+
+    const response = await fetch('https://api.comput3.ai/v1/models', {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch models: ${response.statusText}`);
     }
