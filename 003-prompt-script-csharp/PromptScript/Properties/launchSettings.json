@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "VisionModel": {
+        "commandName": "Project",
+        "commandLineArgs": "-m llama3:70b -p \"Input/Prompts.txt\" -o \"Output\""
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
