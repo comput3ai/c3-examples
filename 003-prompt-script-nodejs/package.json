@@ -1,0 +1,22 @@
+{
+  "name": "c3-prompt-script",
+  "version": "1.0.0",
+  "description": "Script to send multiple prompts to Comput3's LLM infrastructure and save responses",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "keywords": [
+    "comput3",
+    "llm",
+    "ai",
+    "prompt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "yargs": "^17.7.2"
+  }
+} 

@@ -1,0 +1,55 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# dotenv environment variable files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Build & dist
+dist/
+build/
+
+# Cache
+.npm
+.eslintcache
+.cache
+
+# Project-specific
+# Don't track output files but keep the directory
+output/*
+!output/README.txt
+
+# Don't track sample images but keep the directory
+samples/*
+!samples/README.txt
+
+# Don't track input files but keep the directory
+input/*
+!input/README.txt
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store 
